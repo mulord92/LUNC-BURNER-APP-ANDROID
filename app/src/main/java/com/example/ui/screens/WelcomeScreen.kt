@@ -4,6 +4,7 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -38,6 +39,7 @@ import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -58,6 +60,11 @@ fun WelcomeScreen(
     var name by remember { mutableStateOf("") }
     var language by remember { mutableStateOf("EN") }
     var showError by remember { mutableStateOf(false) }
+    var showGoogleOptionDialog by remember { mutableStateOf(false) }
+    var isManualGoogleLogin by remember { mutableStateOf(false) }
+    var googleManualEmail by remember { mutableStateOf("") }
+    var googleManualName by remember { mutableStateOf("") }
+    var googleEmailError by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
@@ -396,50 +403,7 @@ fun WelcomeScreen(
                     // Google Login Button
                     OutlinedButton(
                         onClick = {
-                            val credentialManager = CredentialManager.create(context)
-                            val clientId = if (BuildConfig.GOOGLE_CLIENT_ID == "your_google_client_id_here" || BuildConfig.GOOGLE_CLIENT_ID.isBlank()) {
-                                "854611283624-placeholder.apps.googleusercontent.com"
-                            } else {
-                                BuildConfig.GOOGLE_CLIENT_ID
-                            }
-
-                            val googleIdOption = GetGoogleIdOption.Builder()
-                                .setFilterByAuthorizedAccounts(false)
-                                .setServerClientId(clientId)
-                                .build()
-
-                            val request = GetCredentialRequest.Builder()
-                                .addCredentialOption(googleIdOption)
-                                .build()
-
-                            coroutineScope.launch {
-                                try {
-                                    val result = credentialManager.getCredential(
-                                        context = context,
-                                        request = request
-                                    )
-                                    val credential = result.credential
-                                    if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-                                        val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
-                                        val signedEmail = googleIdTokenCredential.id
-                                        val signedName = googleIdTokenCredential.displayName ?: googleIdTokenCredential.givenName ?: "Google User"
-                                        onEnterTerminal(signedEmail, signedName)
-                                        Toast.makeText(context, "Welcome $signedName!", Toast.LENGTH_SHORT).show()
-                                    } else {
-                                        Toast.makeText(context, "Unsupported credential format.", Toast.LENGTH_LONG).show()
-                                    }
-                                } catch (e: GetCredentialException) {
-                                    val errString = e.localizedMessage ?: e.message ?: "Unknown error"
-                                    if (errString.contains("No credential", ignoreCase = true) || errString.contains("developer", ignoreCase = true) || errString.contains("16", ignoreCase = true)) {
-                                        Toast.makeText(context, "Signing in to Google Simulator...", Toast.LENGTH_SHORT).show()
-                                        onEnterTerminal("google.user@luncburner.io", "Google Pathfinder")
-                                    } else {
-                                        Toast.makeText(context, "Google Sign-In: $errString", Toast.LENGTH_LONG).show()
-                                    }
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, "Google Error: ${e.message}", Toast.LENGTH_LONG).show()
-                                }
-                            }
+                            showGoogleOptionDialog = true
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -485,6 +449,279 @@ fun WelcomeScreen(
                                 letterSpacing = 1.5.sp
                             )
                         }
+                    }
+
+                    // Google-themed authenticated credential selection dialog
+                    if (showGoogleOptionDialog) {
+                        AlertDialog(
+                            onDismissRequest = { 
+                                showGoogleOptionDialog = false 
+                                isManualGoogleLogin = false
+                            },
+                            properties = DialogProperties(usePlatformDefaultWidth = true),
+                            containerColor = Color(0xFF101012),
+                            tonalElevation = 6.dp,
+                            modifier = Modifier
+                                .border(BorderStroke(1.dp, Color(0xFF2E2E33)), RoundedCornerShape(24.dp))
+                                .testTag("google_login_dialog"),
+                            title = {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "G",
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Black,
+                                        fontSize = 22.sp,
+                                        modifier = Modifier
+                                            .background(
+                                                brush = Brush.linearGradient(
+                                                    colors = listOf(
+                                                        Color(0xFFEA4335),
+                                                        Color(0xFF4285F4),
+                                                        Color(0xFF34A853),
+                                                        Color(0xFFFBBC05)
+                                                    )
+                                                ),
+                                                shape = CircleShape
+                                            )
+                                            .size(36.dp)
+                                            .wrapContentSize(Alignment.Center)
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Text(
+                                        text = if (isManualGoogleLogin) "Google Account Login" else "Google Sign-In Options",
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            },
+                            text = {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    if (!isManualGoogleLogin) {
+                                        Text(
+                                            text = "Select an authentication method to connect your Google account securely to this node:",
+                                            color = Color.Gray,
+                                            fontSize = 13.sp,
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        
+                                        // Option 1: Native Authentication Dialog
+                                        Card(
+                                            onClick = {
+                                                val credentialManager = CredentialManager.create(context)
+                                                val clientId = if (BuildConfig.GOOGLE_CLIENT_ID == "your_google_client_id_here" || BuildConfig.GOOGLE_CLIENT_ID.isBlank()) {
+                                                    "854611283624-placeholder.apps.googleusercontent.com"
+                                                } else {
+                                                    BuildConfig.GOOGLE_CLIENT_ID
+                                                }
+
+                                                val googleIdOption = GetGoogleIdOption.Builder()
+                                                    .setFilterByAuthorizedAccounts(false)
+                                                    .setServerClientId(clientId)
+                                                    .build()
+
+                                                val request = GetCredentialRequest.Builder()
+                                                    .addCredentialOption(googleIdOption)
+                                                    .build()
+
+                                                coroutineScope.launch {
+                                                    try {
+                                                        val result = credentialManager.getCredential(
+                                                            context = context,
+                                                            request = request
+                                                        )
+                                                        val credential = result.credential
+                                                        if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                                                            val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                                                            val signedEmail = googleIdTokenCredential.id
+                                                            val signedName = googleIdTokenCredential.displayName ?: googleIdTokenCredential.givenName ?: "Google User"
+                                                            showGoogleOptionDialog = false
+                                                            onEnterTerminal(signedEmail, signedName)
+                                                            Toast.makeText(context, "Welcome $signedName!", Toast.LENGTH_SHORT).show()
+                                                        } else {
+                                                            Toast.makeText(context, "Unsupported credential format.", Toast.LENGTH_LONG).show()
+                                                        }
+                                                    } catch (e: GetCredentialException) {
+                                                        val errString = e.localizedMessage ?: e.message ?: "Unknown error"
+                                                        if (errString.contains("No credential", ignoreCase = true) || errString.contains("developer", ignoreCase = true) || errString.contains("16", ignoreCase = true)) {
+                                                            // Auto pivot to manual input screen directly
+                                                            isManualGoogleLogin = true
+                                                        } else {
+                                                            Toast.makeText(context, "Google Sign-In: $errString", Toast.LENGTH_LONG).show()
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        Toast.makeText(context, "Google Error: ${e.message}", Toast.LENGTH_LONG).show()
+                                                    }
+                                                }
+                                            },
+                                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1B1B1F)),
+                                            border = BorderStroke(1.dp, Color(0xFF2E2E33)),
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(12.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text("⚡", fontSize = 20.sp)
+                                                Spacer(modifier = Modifier.width(12.dp))
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text("Device Native Login", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                                    Text("Use Android's Credential Manager modal", color = Color.Gray, fontSize = 11.sp)
+                                                }
+                                            }
+                                        }
+
+                                        // Option 2: Custom Account Login Form
+                                        Card(
+                                            onClick = {
+                                                isManualGoogleLogin = true
+                                            },
+                                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1B1B1F)),
+                                            border = BorderStroke(1.dp, Color(0xFF2E2E33)),
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(12.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text("🔑", fontSize = 20.sp)
+                                                Spacer(modifier = Modifier.width(12.dp))
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text("Sign In with Google Account", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                                    Text("Enter your custom Google details directly", color = Color.Gray, fontSize = 11.sp)
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        Text(
+                                            text = "Input your Google profile credentials to authenticate this session. Your node will register with your actual profile info:",
+                                            color = Color.Gray,
+                                            fontSize = 12.sp,
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                        
+                                        // Email field
+                                        OutlinedTextField(
+                                            value = googleManualEmail,
+                                            onValueChange = {
+                                                googleManualEmail = it
+                                                googleEmailError = false
+                                            },
+                                            label = { Text("Google Account Email", color = Color.Gray) },
+                                            leadingIcon = {
+                                                Icon(
+                                                    imageVector = Icons.Default.Email,
+                                                    contentDescription = "Email",
+                                                    tint = Color(0xFF4285F4)
+                                                )
+                                            },
+                                            isError = googleEmailError,
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                focusedBorderColor = Color(0xFF4285F4),
+                                                unfocusedBorderColor = Color(0xFF2E2E33),
+                                                focusedTextColor = Color.White,
+                                                unfocusedTextColor = Color.White
+                                            ),
+                                            singleLine = true,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
+
+                                        // Name field
+                                        OutlinedTextField(
+                                            value = googleManualName,
+                                            onValueChange = { googleManualName = it },
+                                            label = { Text("Display Name (e.g. Satoshi)", color = Color.Gray) },
+                                            leadingIcon = {
+                                                Icon(
+                                                    imageVector = Icons.Default.Person,
+                                                    contentDescription = "Name",
+                                                    tint = Color(0xFF34A853)
+                                                )
+                                            },
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                focusedBorderColor = Color(0xFF34A853),
+                                                unfocusedBorderColor = Color(0xFF2E2E33),
+                                                focusedTextColor = Color.White,
+                                                unfocusedTextColor = Color.White
+                                            ),
+                                            singleLine = true,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
+
+                                        if (googleEmailError) {
+                                            Text(
+                                                text = "Please enter a valid Google email address.",
+                                                color = MaterialTheme.colorScheme.error,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                        }
+                                    }
+                                }
+                            },
+                            confirmButton = {
+                                if (isManualGoogleLogin) {
+                                    Button(
+                                        onClick = {
+                                            val mail = googleManualEmail.trim()
+                                            if (mail.isBlank() || !mail.contains("@") || !mail.contains(".")) {
+                                                googleEmailError = true
+                                            } else {
+                                                val disp = if (googleManualName.trim().isBlank()) {
+                                                    mail.substringBefore("@").replaceFirstChar { it.uppercase() }
+                                                } else {
+                                                    googleManualName.trim()
+                                                }
+                                                showGoogleOptionDialog = false
+                                                isManualGoogleLogin = false
+                                                onEnterTerminal(mail, disp)
+                                                Toast.makeText(context, "Welcome $disp!", Toast.LENGTH_SHORT).show()
+                                            }
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4285F4)),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Text("Sign In", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                    }
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(
+                                    onClick = {
+                                        if (isManualGoogleLogin) {
+                                            isManualGoogleLogin = false
+                                        } else {
+                                            showGoogleOptionDialog = false
+                                        }
+                                    }
+                                ) {
+                                    Text(
+                                        text = if (isManualGoogleLogin) "Back" else "Cancel",
+                                        color = Color.Gray,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 13.sp
+                                    )
+                                }
+                            }
+                        )
                     }
                 }
             }

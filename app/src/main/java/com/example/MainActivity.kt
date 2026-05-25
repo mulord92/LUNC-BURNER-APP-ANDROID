@@ -21,8 +21,16 @@ class MainActivity : ComponentActivity() {
     enableEdgeToEdge()
 
     // Initialize Google Mobile Ads SDK for AdSense / AdMob
-    MobileAds.initialize(this) {
-      LuncAdManager.loadInterstitial(this)
+    try {
+      MobileAds.initialize(this) {
+        try {
+          LuncAdManager.loadInterstitial(this)
+        } catch (t: Throwable) {
+          android.util.Log.e("MainActivity", "Error preloading initial interstitial", t)
+        }
+      }
+    } catch (t: Throwable) {
+      android.util.Log.e("MainActivity", "Error initializing MobileAds SDK", t)
     }
 
     setContent {
