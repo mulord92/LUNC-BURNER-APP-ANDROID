@@ -1,0 +1,6 @@
+{
+  "name": "LUNC Burner",
+  "description": "The ultimate utility to burn or simulate LUNC token burning, participate in daily pulses, and engage with the community.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
