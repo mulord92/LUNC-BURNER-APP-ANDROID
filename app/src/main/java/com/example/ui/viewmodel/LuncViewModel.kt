@@ -21,9 +21,22 @@ class LuncViewModel(application: Application) : AndroidViewModel(application) {
     private val database = AppDatabase.getDatabase(application)
     private val repository = LuncRepository(application, database)
 
+    private val prefs = application.getSharedPreferences("lunc_prefs", android.content.Context.MODE_PRIVATE)
+    private val _selectedLanguage = MutableStateFlow(prefs.getString("selected_lang", "EN") ?: "EN")
+    val selectedLanguage: StateFlow<String> = _selectedLanguage.asStateFlow()
+
     // UI States observed by Compose Screens
     val currentUser: StateFlow<UserEntity?> = repository.currentUser
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    init {
+        currentUser.onEach { user ->
+            if (user != null && user.language != _selectedLanguage.value) {
+                _selectedLanguage.value = user.language
+                prefs.edit().putString("selected_lang", user.language).apply()
+            }
+        }.launchIn(viewModelScope)
+    }
 
     val games: StateFlow<List<GameProgressEntity>> = repository.allGames
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -50,6 +63,18 @@ class LuncViewModel(application: Application) : AndroidViewModel(application) {
     fun login(email: String, name: String) {
         viewModelScope.launch {
             repository.login(email, name)
+            repository.updateLanguage(_selectedLanguage.value)
+        }
+    }
+
+    fun updateLanguage(lang: String) {
+        viewModelScope.launch {
+            _selectedLanguage.value = lang
+            prefs.edit().putString("selected_lang", lang).apply()
+            val user = currentUser.value
+            if (user != null) {
+                repository.updateLanguage(lang)
+            }
         }
     }
 

@@ -32,6 +32,7 @@ import com.example.ui.theme.OrangeFlame
 import com.example.ui.theme.OrangeFlameBright
 import com.example.ui.theme.TerminalCyan
 import com.example.ui.viewmodel.LuncViewModel
+import com.example.ui.Translations
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +40,7 @@ fun MainContainer(
     viewModel: LuncViewModel
 ) {
     val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
+    val selectedLanguage by viewModel.selectedLanguage.collectAsStateWithLifecycle()
     val games by viewModel.games.collectAsStateWithLifecycle()
     val burnLogs by viewModel.burnLogs.collectAsStateWithLifecycle()
     val analytics by viewModel.analytics.collectAsStateWithLifecycle()
@@ -74,6 +76,8 @@ fun MainContainer(
         // Welcome logins terminal
         LuncBurnerTheme(darkTheme = true) {
             WelcomeScreen(
+                selectedLanguage = selectedLanguage,
+                onLanguageChange = { viewModel.updateLanguage(it) },
                 onEnterTerminal = { email, name ->
                     viewModel.login(email, name)
                 }
@@ -197,23 +201,61 @@ fun MainContainer(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                // Language button ("EN")
-                                Card(
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E24)),
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                // Language button dropdown
+                                var isTopLangExpanded by remember { mutableStateOf(false) }
+                                Box {
+                                    Card(
+                                        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E24)),
+                                        shape = RoundedCornerShape(12.dp),
+                                        modifier = Modifier.clickable { isTopLangExpanded = true }
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Language,
-                                            contentDescription = "Language",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(12.dp)
-                                        )
-                                        Text("EN", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Language,
+                                                contentDescription = "Language",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(12.dp)
+                                            )
+                                            Text(
+                                                text = selectedLanguage,
+                                                color = Color.White,
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            Icon(
+                                                imageVector = Icons.Default.ArrowDropDown,
+                                                contentDescription = "Dropdown Indicator",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(10.dp)
+                                            )
+                                        }
+                                    }
+
+                                    DropdownMenu(
+                                        expanded = isTopLangExpanded,
+                                        onDismissRequest = { isTopLangExpanded = false },
+                                        modifier = Modifier.background(Color(0xFF1E1E24))
+                                    ) {
+                                        listOf("EN", "PL", "ZH", "FR", "ES").forEach { code ->
+                                            DropdownMenuItem(
+                                                text = {
+                                                    Text(
+                                                        text = "${Translations.getLanguageFullName(code)} ($code)",
+                                                        color = if (selectedLanguage == code) OrangeFlameBright else Color.White,
+                                                        fontSize = 12.sp,
+                                                        fontWeight = if (selectedLanguage == code) FontWeight.Bold else FontWeight.Normal
+                                                    )
+                                                },
+                                                onClick = {
+                                                    viewModel.updateLanguage(code)
+                                                    isTopLangExpanded = false
+                                                }
+                                            )
+                                        }
                                     }
                                 }
 

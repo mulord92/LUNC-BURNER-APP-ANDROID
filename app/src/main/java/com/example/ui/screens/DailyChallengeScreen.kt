@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import com.example.ui.Translations
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -54,7 +55,7 @@ fun DailyChallengeScreen(
                 .padding(vertical = 12.dp)
         ) {
             Text(
-                text = "DAILY CHALLENGE",
+                text = Translations.get("daily_challenges", user.language),
                 color = Color.White,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Black,
@@ -92,7 +93,7 @@ fun DailyChallengeScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "EARN 5,000 POINTS TO COMPLETE THE MISSION.",
+                    text = Translations.get("watch_ads_mission_desc", user.language),
                     color = Color.LightGray,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
@@ -236,14 +237,14 @@ fun DailyChallengeScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "SUPPORT THE MISSION",
+                        text = Translations.get("watched", user.language),
                         color = Color.White,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 1.sp
                     )
                     Text(
-                        text = "WATCH ADS TO BURN MORE COINS (+1000 PTS)",
+                        text = Translations.get("watched_desc", user.language),
                         color = Color.Gray,
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold

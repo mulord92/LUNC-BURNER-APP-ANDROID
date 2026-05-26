@@ -26,6 +26,9 @@ interface UserDao {
     @Query("UPDATE users SET notificationsEnabled = :enabled WHERE uid = :uid")
     suspend fun updateNotificationsEnabled(uid: String, enabled: Boolean)
 
+    @Query("UPDATE users SET language = :language WHERE uid = :uid")
+    suspend fun updateLanguage(uid: String, language: String)
+
     @Query("UPDATE users SET isLoggedIn = :isLoggedIn WHERE uid = :uid")
     suspend fun updateLoginState(uid: String, isLoggedIn: Boolean)
 }

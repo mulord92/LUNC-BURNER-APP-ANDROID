@@ -17,7 +17,8 @@ data class UserEntity(
     val dailyPointsTarget: Int = 5000,
     val dailyPointsClaimed: Int = 0,
     val darkModeEnabled: Boolean = true,
-    val notificationsEnabled: Boolean = true
+    val notificationsEnabled: Boolean = true,
+    val language: String = "EN"
 )
 
 @Entity(tableName = "games")

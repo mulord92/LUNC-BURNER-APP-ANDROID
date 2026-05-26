@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.UserEntity
 import com.example.ui.theme.OrangeFlame
+import com.example.ui.Translations
 import com.example.ui.theme.OrangeFlameBright
 import com.example.ui.theme.GoldPoints
 
@@ -87,7 +88,7 @@ fun DashboardScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "PERSONAL NODE",
+                        text = Translations.get("personal_node", user.language),
                         color = Color.Gray,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
@@ -145,7 +146,7 @@ fun DashboardScreen(
                                 modifier = Modifier.padding(16.dp)
                             ) {
                                 Text(
-                                    text = "ENGAGEMENT RANK",
+                                    text = Translations.get("rank", user.language),
                                     color = Color.Gray,
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Bold,
@@ -166,7 +167,7 @@ fun DashboardScreen(
 
                     // Service duration label
                     Text(
-                        text = "SERVICE DURATION",
+                        text = Translations.get("days_active", user.language),
                         color = OrangeFlameBright,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
@@ -183,14 +184,6 @@ fun DashboardScreen(
                             color = Color.White,
                             fontSize = 32.sp,
                             fontWeight = FontWeight.Black
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "DAYS WITH US",
-                            color = Color.Gray,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(bottom = 6.dp)
                         )
                     }
                 }
@@ -222,7 +215,7 @@ fun DashboardScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "SUPPORT THE MISSION",
+                            text = Translations.get("watched", user.language),
                             color = Color.White,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Black,
@@ -230,7 +223,7 @@ fun DashboardScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "WATCH AN AD TO BURN TOKENS AND EARN POINTS",
+                            text = Translations.get("watched_desc", user.language),
                             color = Color.Gray,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.SemiBold,
@@ -287,7 +280,7 @@ fun DashboardScreen(
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
-                        text = "BURNING LEADERS",
+                        text = Translations.get("leaderboard", user.language),
                         color = Color.Gray,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,

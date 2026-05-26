@@ -12,10 +12,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import com.example.ui.Translations
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -54,9 +56,10 @@ import com.example.ui.theme.OrangeFlameDark
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WelcomeScreen(
+    selectedLanguage: String,
+    onLanguageChange: (String) -> Unit,
     onEnterTerminal: (email: String, name: String) -> Unit
 ) {
-    var language by remember { mutableStateOf("EN") }
     var isSigningIn by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -150,32 +153,65 @@ fun WelcomeScreen(
                 }
 
                 // Language Option
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF18181B).copy(alpha = 0.8f)
-                    ),
-                    modifier = Modifier
-                        .clickable { language = if (language == "EN") "ES" else "EN" }
-                        .testTag("lang_toggle"),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                var dropDownExpanded by remember { mutableStateOf(false) }
+
+                Box {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFF18181B).copy(alpha = 0.8f)
+                        ),
+                        modifier = Modifier
+                            .clickable { dropDownExpanded = true }
+                            .testTag("lang_toggle"),
+                        shape = RoundedCornerShape(16.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Language,
-                            contentDescription = "Language Selector",
-                            tint = Color.White,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Text(
-                            text = language,
-                            color = Color.White,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Language,
+                                contentDescription = "Language Selector",
+                                tint = Color.White,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Text(
+                                text = selectedLanguage,
+                                color = Color.White,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = "Dropdown indicator",
+                                tint = Color.White,
+                                modifier = Modifier.size(12.dp)
+                            )
+                        }
+                    }
+
+                    DropdownMenu(
+                        expanded = dropDownExpanded,
+                        onDismissRequest = { dropDownExpanded = false },
+                        modifier = Modifier.background(Color(0xFF18181B))
+                    ) {
+                        listOf("EN", "PL", "ZH", "FR", "ES").forEach { code ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = "${Translations.getLanguageFullName(code)} ($code)",
+                                        color = if (selectedLanguage == code) OrangeFlameBright else Color.White,
+                                        fontSize = 12.sp,
+                                        fontWeight = if (selectedLanguage == code) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                },
+                                onClick = {
+                                    onLanguageChange(code)
+                                    dropDownExpanded = false
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -218,7 +254,7 @@ fun WelcomeScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "LUNC BURNER APP",
+                    text = Translations.get("title", selectedLanguage),
                     color = Color.White,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Black,
@@ -230,11 +266,7 @@ fun WelcomeScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = if (language == "EN") {
-                        "\"This app burns LUNC. We're glad you're with us. Together, we'll achieve our goal.\""
-                    } else {
-                        "\"Esta aplicación quema LUNC. Nos alegra tenerte. Juntos, lograremos la meta.\""
-                    },
+                    text = Translations.get("slogan", selectedLanguage),
                     color = Color(0xFFD4D4D8),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
@@ -260,7 +292,7 @@ fun WelcomeScreen(
                         modifier = Modifier.size(24.dp)
                     )
                     Text(
-                        text = "Connecting securely to Google and LUNC network...",
+                        text = Translations.get("connecting", selectedLanguage),
                         color = Color.Gray,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
@@ -358,7 +390,7 @@ fun WelcomeScreen(
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "SIGN IN WITH GOOGLE",
+                                text = Translations.get("sign_in", selectedLanguage),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.5.sp

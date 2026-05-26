@@ -299,6 +299,11 @@ class LuncRepository(
         userDao.insertOrUpdateUser(user.copy(notificationsEnabled = enabled))
     }
 
+    suspend fun updateLanguage(lang: String) {
+        val user = userDao.getUser() ?: return
+        userDao.insertOrUpdateUser(user.copy(language = lang))
+    }
+
     suspend fun incrementMetric(metricId: String) {
         analyticsDao.incrementMetric(metricId)
         if (!_isOnline.value) {
