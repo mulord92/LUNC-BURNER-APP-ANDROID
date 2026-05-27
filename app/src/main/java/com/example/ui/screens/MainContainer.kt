@@ -55,6 +55,19 @@ fun MainContainer(
 
     var currentTab by remember { mutableStateOf("DASH") }
 
+    val onTabClicked = { targetTab: String ->
+        if (currentTab != targetTab) {
+            val act = activity
+            if (act != null) {
+                LuncAdManager.showInterstitial(act) {
+                    currentTab = targetTab
+                }
+            } else {
+                currentTab = targetTab
+            }
+        }
+    }
+
     // If active mini-game is playing, show it full-bleed!
     val activeGame = activeGameToPlay
     if (activeGame != null) {
@@ -134,7 +147,7 @@ fun MainContainer(
                             val active = currentTab == tab.first
                             NavigationRailItem(
                                 selected = active,
-                                onClick = { currentTab = tab.first },
+                                onClick = { onTabClicked(tab.first) },
                                 icon = {
                                     Icon(
                                         imageVector = tab.second,
@@ -427,7 +440,7 @@ fun MainContainer(
                                 val active = currentTab == tab.first
                                 NavigationBarItem(
                                     selected = active,
-                                    onClick = { currentTab = tab.first },
+                                    onClick = { onTabClicked(tab.first) },
                                     icon = {
                                         Icon(
                                             imageVector = tab.second,
