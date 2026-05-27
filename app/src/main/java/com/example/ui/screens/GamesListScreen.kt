@@ -26,14 +26,42 @@ import com.example.ui.theme.OrangeFlame
 import com.example.ui.theme.OrangeFlameBright
 import com.example.ui.theme.OrangeFlameDark
 import com.example.ui.theme.GoldPoints
+import com.example.ui.viewmodel.CommunityRealtimeStats
 
 @Composable
 fun GamesListScreen(
     games: List<GameProgressEntity>,
+    communityStats: CommunityRealtimeStats,
     onPlayGame: (GameProgressEntity) -> Unit,
     onClaimPoints: (String) -> Unit,
     onAwardPoints: (Int) -> Unit
 ) {
+    val formattedTotalBurned = remember(communityStats.totalBurned) {
+        val number = communityStats.totalBurned
+        when {
+            number >= 1_000_000_000_000L -> String.format(java.util.Locale.US, "%.3fT", number.toDouble() / 1_000_000_000_000.0)
+            number >= 1_000_000_000L -> String.format(java.util.Locale.US, "%.3fB", number.toDouble() / 1_000_000_000.0)
+            number >= 1_000_000L -> String.format(java.util.Locale.US, "%.2fM", number.toDouble() / 1_000_000.0)
+            else -> number.toString()
+        }
+    }
+
+    val formattedStaked = remember(communityStats.baseStaked) {
+        val number = communityStats.baseStaked
+        when {
+            number >= 1_000_000_000_000L -> String.format(java.util.Locale.US, "%.3fT", number.toDouble() / 1_000_000_000_000.0)
+            number >= 1_000_000_000L -> String.format(java.util.Locale.US, "%.3fB", number.toDouble() / 1_000_000_000.0)
+            number >= 1_000_000L -> String.format(java.util.Locale.US, "%.2fM", number.toDouble() / 1_000_000.0)
+            else -> number.toString()
+        }
+    }
+
+    val formattedPeg = remember(communityStats.baseUstcPeg) {
+        String.format(java.util.Locale.US, "%.2f%%", communityStats.baseUstcPeg)
+    }
+
+    val progressValueFraction = communityStats.burnPercentage
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -358,7 +386,7 @@ fun GamesListScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "124.52B / 150B (83%)",
+                            text = "$formattedTotalBurned / 150B (${(progressValueFraction * 100).toInt()}%)",
                             color = OrangeFlameBright,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Black
@@ -378,7 +406,7 @@ fun GamesListScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxHeight()
-                                .fillMaxWidth(0.83f)
+                                .fillMaxWidth(progressValueFraction)
                                 .clip(RoundedCornerShape(4.dp))
                                 .background(
                                     Brush.horizontalGradient(
@@ -404,7 +432,7 @@ fun GamesListScreen(
                             Column(modifier = Modifier.padding(12.dp)) {
                                 Text("LUNC STAKED", color = Color.Gray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                                 Spacer(modifier = Modifier.height(2.dp))
-                                Text("1.08T (15.6%)", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                Text("$formattedStaked (15.6%)", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                             }
                         }
 
@@ -417,7 +445,7 @@ fun GamesListScreen(
                             Column(modifier = Modifier.padding(12.dp)) {
                                 Text("USTC REPEG", color = Color.Gray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                                 Spacer(modifier = Modifier.height(2.dp))
-                                Text("34.2% Stable", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                Text("$formattedPeg Stable", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                             }
                         }
                     }

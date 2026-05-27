@@ -32,6 +32,7 @@ import com.example.ui.theme.OrangeFlame
 import com.example.ui.theme.OrangeFlameBright
 import com.example.ui.theme.TerminalCyan
 import com.example.ui.viewmodel.LuncViewModel
+import com.example.ui.viewmodel.CommunityRealtimeStats
 import com.example.ui.Translations
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,6 +50,7 @@ fun MainContainer(
     val syncState by viewModel.syncState.collectAsStateWithLifecycle()
     val activeGameToPlay by viewModel.activeGameToPlay.collectAsStateWithLifecycle()
     val marketData by viewModel.marketData.collectAsStateWithLifecycle()
+    val communityStats by viewModel.communityStats.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
     val activity = context as? Activity
@@ -384,6 +386,7 @@ fun MainContainer(
                             )
                             "GAMES" -> GamesListScreen(
                                 games = games,
+                                communityStats = communityStats,
                                 onPlayGame = { gameSelected ->
                                     viewModel.selectGameToPlay(gameSelected)
                                 },

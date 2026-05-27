@@ -47,6 +47,8 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.OrangeFlame
@@ -66,6 +68,17 @@ fun WelcomeScreen(
     var customEmailInput by remember { mutableStateOf("") }
     var customNameInput by remember { mutableStateOf("") }
     var showCustomAccountForm by remember { mutableStateOf(false) }
+
+    // Pristine state variables for Login & Register Tabs
+    var activeTab by remember { mutableStateOf(0) } // 0 = Sign In, 1 = Register
+    var loginEmail by remember { mutableStateOf("") }
+    var loginPassword by remember { mutableStateOf("") }
+    var loginPasswordVisible by remember { mutableStateOf(false) }
+
+    var registerName by remember { mutableStateOf("") }
+    var registerEmail by remember { mutableStateOf("") }
+    var registerPassword by remember { mutableStateOf("") }
+    var registerPasswordVisible by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
@@ -283,73 +296,421 @@ fun WelcomeScreen(
                 )
             }
 
-            // Centered Google Sign-In Button with loading state
-            Column(
+            // Integrated Custom Login, Register, and Normal Google Authentication Tab Interface
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF131316)),
+                shape = RoundedCornerShape(24.dp),
+                border = BorderStroke(1.dp, Color(0xFF2E2E33)),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(vertical = 16.dp)
             ) {
-                if (isSigningIn) {
-                    CircularProgressIndicator(
-                        color = OrangeFlameBright,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Text(
-                        text = Translations.get("connecting", selectedLanguage),
-                        color = Color.Gray,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                } else {
-                    OutlinedButton(
-                        onClick = {
-                            showGooglePicker = true
-                        },
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // TAB SWITCHER
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp)
-                            .testTag("google_login_button"),
-                        shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(1.dp, Color(0xFF2E2E33)),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = Color(0xFF131316),
-                            contentColor = Color.White
-                        )
+                            .background(Color(0xFF09090A), RoundedCornerShape(14.dp))
+                            .padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxSize()
+                        // Tab 0: SIGN IN
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (activeTab == 0) OrangeFlame else Color.Transparent
+                            ),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { activeTab = 0 }
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 10.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "SECURE LOGIN",
+                                    color = if (activeTab == 0) Color.White else Color.Gray,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    letterSpacing = 1.sp
+                                )
+                            }
+                        }
+
+                        // Tab 1: REGISTER
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (activeTab == 1) OrangeFlame else Color.Transparent
+                            ),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { activeTab = 1 }
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 10.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "REGISTER NODE",
+                                    color = if (activeTab == 1) Color.White else Color.Gray,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    letterSpacing = 1.sp
+                                )
+                            }
+                        }
+                    }
+
+                    // TAB CONTENT
+                    if (activeTab == 0) {
+                        // SIGN IN FORM
+                        OutlinedTextField(
+                            value = loginEmail,
+                            onValueChange = { loginEmail = it },
+                            label = { Text("Email Address", color = Color.Gray) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Email,
+                                    contentDescription = "Email Icon",
+                                    tint = Color.Gray,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = OrangeFlameBright,
+                                unfocusedBorderColor = Color(0xFF26262B),
+                                focusedLabelColor = OrangeFlameBright,
+                                unfocusedLabelColor = Color.Gray,
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        OutlinedTextField(
+                            value = loginPassword,
+                            onValueChange = { loginPassword = it },
+                            label = { Text("Password", color = Color.Gray) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Lock,
+                                    contentDescription = "Lock Icon",
+                                    tint = Color.Gray,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            },
+                            trailingIcon = {
+                                Text(
+                                    text = if (loginPasswordVisible) "HIDE" else "SHOW",
+                                    color = OrangeFlameBright,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Black,
+                                    modifier = Modifier
+                                        .clickable { loginPasswordVisible = !loginPasswordVisible }
+                                        .padding(8.dp)
+                                )
+                            },
+                            visualTransformation = if (loginPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = OrangeFlameBright,
+                                unfocusedBorderColor = Color(0xFF26262B),
+                                focusedLabelColor = OrangeFlameBright,
+                                unfocusedLabelColor = Color.Gray,
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Button(
+                            onClick = {
+                                if (loginEmail.isNotBlank()) {
+                                    val email = loginEmail.trim()
+                                    val fallbackName = email.substringBefore("@").replaceFirstChar { it.uppercase() }
+                                    onEnterTerminal(email, fallbackName)
+                                    Toast.makeText(context, "Welcome back, $fallbackName!", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(context, "Please enter your email", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = OrangeFlame),
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp)
                         ) {
                             Text(
-                                text = "G",
+                                text = "DECRYPT & ENTER NODE",
                                 color = Color.White,
                                 fontWeight = FontWeight.Black,
-                                fontSize = 18.sp,
-                                modifier = Modifier
-                                    .background(
-                                        brush = Brush.linearGradient(
-                                            colors = listOf(
-                                                Color(0xFFEA4335),
-                                                Color(0xFF4285F4),
-                                                Color(0xFF34A853),
-                                                Color(0xFFFBBC05)
-                                            )
-                                        ),
-                                        shape = CircleShape
-                                    )
-                                    .size(24.dp)
-                                    .wrapContentSize(Alignment.Center)
-                             )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                text = Translations.get("sign_in", selectedLanguage),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 1.5.sp
+                                fontSize = 12.sp,
+                                letterSpacing = 1.sp
                             )
+                        }
+
+                    } else {
+                        // REGISTER FORM
+                        OutlinedTextField(
+                            value = registerName,
+                            onValueChange = { registerName = it },
+                            label = { Text("Display Name", color = Color.Gray) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = "User Icon",
+                                    tint = Color.Gray,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = OrangeFlameBright,
+                                unfocusedBorderColor = Color(0xFF26262B),
+                                focusedLabelColor = OrangeFlameBright,
+                                unfocusedLabelColor = Color.Gray,
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        OutlinedTextField(
+                            value = registerEmail,
+                            onValueChange = { registerEmail = it },
+                            label = { Text("Email Address", color = Color.Gray) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Email,
+                                    contentDescription = "Email Icon",
+                                    tint = Color.Gray,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = OrangeFlameBright,
+                                unfocusedBorderColor = Color(0xFF26262B),
+                                focusedLabelColor = OrangeFlameBright,
+                                unfocusedLabelColor = Color.Gray,
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        OutlinedTextField(
+                            value = registerPassword,
+                            onValueChange = { registerPassword = it },
+                            label = { Text("Password", color = Color.Gray) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Lock,
+                                    contentDescription = "Lock Icon",
+                                    tint = Color.Gray,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            },
+                            trailingIcon = {
+                                Text(
+                                    text = if (registerPasswordVisible) "HIDE" else "SHOW",
+                                    color = OrangeFlameBright,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Black,
+                                    modifier = Modifier
+                                        .clickable { registerPasswordVisible = !registerPasswordVisible }
+                                        .padding(8.dp)
+                                )
+                            },
+                            visualTransformation = if (registerPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = OrangeFlameBright,
+                                unfocusedBorderColor = Color(0xFF26262B),
+                                focusedLabelColor = OrangeFlameBright,
+                                unfocusedLabelColor = Color.Gray,
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Button(
+                            onClick = {
+                                if (registerEmail.isNotBlank() && registerName.isNotBlank()) {
+                                    val email = registerEmail.trim()
+                                    val name = registerName.trim()
+                                    onEnterTerminal(email, name)
+                                    Toast.makeText(context, "Node Profile registered for $name!", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(context, "Please fill out all fields", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = OrangeFlame),
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp)
+                        ) {
+                            Text(
+                                text = "INITIALIZE PROTOCOL NODE",
+                                color = Color.White,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 12.sp,
+                                letterSpacing = 1.sp
+                            )
+                        }
+                    }
+
+                    // STANDARD "OR" DIVIDER
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Spacer(modifier = Modifier.weight(1f).height(1.dp).background(Color(0xFF2E2E33)))
+                        Text(
+                            text = "OR CONTINUE WITH",
+                            color = Color.Gray,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp
+                        )
+                        Spacer(modifier = Modifier.weight(1f).height(1.dp).background(Color(0xFF2E2E33)))
+                    }
+
+                    // DIRECT, NORMAL PROCESS FOR GOOGLE LOGIN
+                    if (isSigningIn) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            CircularProgressIndicator(
+                                color = OrangeFlameBright,
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp
+                            )
+                            Text(
+                                text = Translations.get("connecting", selectedLanguage),
+                                color = Color.Gray,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    } else {
+                        OutlinedButton(
+                            onClick = {
+                                isSigningIn = true
+                                val credentialManager = CredentialManager.create(context)
+                                val clientId = if (BuildConfig.GOOGLE_CLIENT_ID == "your_google_client_id_here" || BuildConfig.GOOGLE_CLIENT_ID.isBlank()) {
+                                    "854611283624-placeholder.apps.googleusercontent.com"
+                                } else {
+                                    BuildConfig.GOOGLE_CLIENT_ID
+                                }
+
+                                val googleIdOption = GetGoogleIdOption.Builder()
+                                    .setFilterByAuthorizedAccounts(false)
+                                    .setServerClientId(clientId)
+                                    .build()
+
+                                val request = GetCredentialRequest.Builder()
+                                    .addCredentialOption(googleIdOption)
+                                    .build()
+
+                                coroutineScope.launch {
+                                    try {
+                                        val result = credentialManager.getCredential(
+                                            context = context,
+                                            request = request
+                                        )
+                                        val credential = result.credential
+                                        if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                                            val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                                            val signedEmail = googleIdTokenCredential.id
+                                            val signedName = googleIdTokenCredential.displayName ?: googleIdTokenCredential.givenName ?: "Google User"
+                                            isSigningIn = false
+                                            onEnterTerminal(signedEmail, signedName)
+                                            Toast.makeText(context, "Welcome $signedName!", Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            isSigningIn = false
+                                            Toast.makeText(context, "Unsupported credential format.", Toast.LENGTH_LONG).show()
+                                        }
+                                    } catch (e: GetCredentialException) {
+                                        isSigningIn = false
+                                        val errString = e.localizedMessage ?: e.message ?: "Unknown error"
+                                        Toast.makeText(context, "Google Sign-In Cancelled / Unavailable on this environment.", Toast.LENGTH_LONG).show()
+                                    } catch (e: Exception) {
+                                        isSigningIn = false
+                                        Toast.makeText(context, "Google Sign-In Exception: ${e.message}", Toast.LENGTH_LONG).show()
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp)
+                                .testTag("google_login_button"),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, Color(0xFF2E2E33)),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = Color(0xFF09090A),
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                Text(
+                                    text = "G",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 14.sp,
+                                    modifier = Modifier
+                                        .background(
+                                            brush = Brush.linearGradient(
+                                                colors = listOf(
+                                                    Color(0xFFEA4335),
+                                                    Color(0xFF4285F4),
+                                                    Color(0xFF34A853),
+                                                    Color(0xFFFBBC05)
+                                                )
+                                            ),
+                                            shape = CircleShape
+                                        )
+                                        .size(18.dp)
+                                        .wrapContentSize(Alignment.Center)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = Translations.get("sign_in", selectedLanguage),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp
+                                )
+                            }
                         }
                     }
                 }
@@ -434,352 +795,6 @@ fun WelcomeScreen(
                     )
                 }
             }
-        }
-
-        if (showGooglePicker) {
-            AlertDialog(
-                onDismissRequest = { showGooglePicker = false; showCustomAccountForm = false },
-                title = null,
-                text = {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        // Styled Google Letter Logo
-                        Row(
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            val logoColors = listOf(
-                                Color(0xFF4285F4), // G
-                                Color(0xFFEA4335), // o
-                                Color(0xFFFBBC05), // o
-                                Color(0xFF4285F4), // g
-                                Color(0xFF34A853), // l
-                                Color(0xFFEA4335)  // e
-                            )
-                            val logoLetters = listOf("G", "o", "o", "g", "l", "e")
-                            logoLetters.forEachIndexed { index, letter ->
-                                Text(
-                                    text = letter,
-                                    color = logoColors[index],
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.5.sp
-                                )
-                            }
-                        }
-
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = "Sign in with Google",
-                                color = Color.White,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center
-                            )
-                            Text(
-                                text = "Choose a Google account to continue to LUNC Burner App",
-                                color = Color.Gray,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Normal,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF26262B)))
-
-                        if (!showCustomAccountForm) {
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                // Account 1: User's Primary Google Account
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .clickable {
-                                            showGooglePicker = false
-                                            onEnterTerminal("silanganeast@gmail.com", "Silangan East")
-                                            Toast.makeText(context, "Welcome Silangan East!", Toast.LENGTH_SHORT).show()
-                                        }
-                                        .border(1.dp, Color(0xFF26262B), RoundedCornerShape(12.dp))
-                                        .padding(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                            .background(Color(0xFF4285F4), CircleShape),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = "S",
-                                            color = Color.White,
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = "Silangan East",
-                                            color = Color.White,
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        Text(
-                                            text = "silanganeast@gmail.com",
-                                            color = Color.Gray,
-                                            fontSize = 11.sp
-                                        )
-                                    }
-                                }
-
-                                // Account 2: Secondary / Test Account
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .clickable {
-                                            showGooglePicker = false
-                                            onEnterTerminal("lunc.supporter@gmail.com", "Eco Supporter")
-                                            Toast.makeText(context, "Welcome Eco Supporter!", Toast.LENGTH_SHORT).show()
-                                        }
-                                        .border(1.dp, Color(0xFF26262B), RoundedCornerShape(12.dp))
-                                        .padding(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                            .background(Color(0xFFEA4335), CircleShape),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = "E",
-                                            color = Color.White,
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = "Eco Supporter",
-                                            color = Color.White,
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        Text(
-                                            text = "lunc.supporter@gmail.com",
-                                            color = Color.Gray,
-                                            fontSize = 11.sp
-                                        )
-                                    }
-                                }
-
-                                // Account 3: Use another account option
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .clickable {
-                                            showCustomAccountForm = true
-                                        }
-                                        .border(1.dp, Color(0xFF26262B), RoundedCornerShape(12.dp))
-                                        .padding(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                            .background(Color(0xFF26262B), CircleShape),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Person,
-                                            contentDescription = "Add Google Account",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
-                                    Text(
-                                        text = "Add / Use another account",
-                                        color = OrangeFlameBright,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-                        } else {
-                            // Custom account input form
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                OutlinedTextField(
-                                    value = customEmailInput,
-                                    onValueChange = { customEmailInput = it },
-                                    label = { Text("Google Email", color = Color.Gray) },
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = OrangeFlameBright,
-                                        unfocusedBorderColor = Color(0xFF26262B),
-                                        focusedLabelColor = OrangeFlameBright,
-                                        unfocusedLabelColor = Color.Gray,
-                                        focusedTextColor = Color.White,
-                                        unfocusedTextColor = Color.White
-                                    ),
-                                    shape = RoundedCornerShape(12.dp),
-                                    singleLine = true,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-
-                                OutlinedTextField(
-                                    value = customNameInput,
-                                    onValueChange = { customNameInput = it },
-                                    label = { Text("Display Name", color = Color.Gray) },
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = OrangeFlameBright,
-                                        unfocusedBorderColor = Color(0xFF26262B),
-                                        focusedLabelColor = OrangeFlameBright,
-                                        unfocusedLabelColor = Color.Gray,
-                                        focusedTextColor = Color.White,
-                                        unfocusedTextColor = Color.White
-                                    ),
-                                    shape = RoundedCornerShape(12.dp),
-                                    singleLine = true,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    TextButton(
-                                        onClick = { showCustomAccountForm = false },
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        Text("Cancel", color = Color.Gray)
-                                    }
-
-                                    Button(
-                                        onClick = {
-                                            if (customEmailInput.isNotBlank()) {
-                                                val email = customEmailInput.trim()
-                                                val name = if (customNameInput.isNotBlank()) customNameInput.trim() else "Google User"
-                                                showGooglePicker = false
-                                                showCustomAccountForm = false
-                                                onEnterTerminal(email, name)
-                                                Toast.makeText(context, "Welcome $name!", Toast.LENGTH_SHORT).show()
-                                            } else {
-                                                Toast.makeText(context, "Please enter a valid Google email", Toast.LENGTH_SHORT).show()
-                                            }
-                                        },
-                                        colors = ButtonDefaults.buttonColors(containerColor = OrangeFlameBright),
-                                        shape = RoundedCornerShape(12.dp),
-                                        modifier = Modifier.weight(1.5f)
-                                    ) {
-                                        Text("Continue", color = Color.Black, fontWeight = FontWeight.Bold)
-                                    }
-                                }
-                            }
-                        }
-
-                        // Option to trigger Native System Manager
-                        Spacer(modifier = Modifier.fillMaxWidth().height(4.dp))
-                        TextButton(
-                            onClick = {
-                                // Trigger native Android CredentialManager
-                                showGooglePicker = false
-                                isSigningIn = true
-                                val credentialManager = CredentialManager.create(context)
-                                val clientId = if (BuildConfig.GOOGLE_CLIENT_ID == "your_google_client_id_here" || BuildConfig.GOOGLE_CLIENT_ID.isBlank()) {
-                                    "854611283624-placeholder.apps.googleusercontent.com"
-                                } else {
-                                    BuildConfig.GOOGLE_CLIENT_ID
-                                }
-
-                                val googleIdOption = GetGoogleIdOption.Builder()
-                                    .setFilterByAuthorizedAccounts(false)
-                                    .setServerClientId(clientId)
-                                    .build()
-
-                                val request = GetCredentialRequest.Builder()
-                                    .addCredentialOption(googleIdOption)
-                                    .build()
-
-                                coroutineScope.launch {
-                                    try {
-                                        val result = credentialManager.getCredential(
-                                            context = context,
-                                            request = request
-                                        )
-                                        val credential = result.credential
-                                        if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-                                            val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
-                                            val signedEmail = googleIdTokenCredential.id
-                                            val signedName = googleIdTokenCredential.displayName ?: googleIdTokenCredential.givenName ?: "Google User"
-                                            isSigningIn = false
-                                            onEnterTerminal(signedEmail, signedName)
-                                            Toast.makeText(context, "Welcome $signedName!", Toast.LENGTH_SHORT).show()
-                                        } else {
-                                            isSigningIn = false
-                                            Toast.makeText(context, "Unsupported credential format.", Toast.LENGTH_LONG).show()
-                                        }
-                                    } catch (e: GetCredentialException) {
-                                        isSigningIn = false
-                                        val errString = e.localizedMessage ?: e.message ?: "Unknown error"
-                                        Toast.makeText(context, "Google Sign-In Exception: $errString", Toast.LENGTH_LONG).show()
-                                        // Auto fallback to local chooser
-                                        showGooglePicker = true
-                                    } catch (e: Exception) {
-                                        isSigningIn = false
-                                        Toast.makeText(context, "Google Error: ${e.message}", Toast.LENGTH_LONG).show()
-                                        showGooglePicker = true
-                                    }
-                                }
-                            },
-                            colors = ButtonDefaults.textButtonColors(contentColor = Color.Gray)
-                        ) {
-                            Text("Use standard system credentials resolver...", fontSize = 11.sp, textDecoration = TextDecoration.Underline)
-                        }
-
-                        Text(
-                            text = "To continue, Google will share your name, email address, profile picture, and language preference with LUNC Burner App.",
-                            color = Color(0xFF71717A),
-                            fontSize = 10.sp,
-                            textAlign = TextAlign.Center,
-                            lineHeight = 14.sp
-                        )
-                    }
-                },
-                confirmButton = {},
-                dismissButton = {
-                    TextButton(
-                        onClick = {
-                            showGooglePicker = false
-                            showCustomAccountForm = false
-                        }
-                    ) {
-                        Text("Close", color = Color.Gray)
-                    }
-                },
-                containerColor = Color(0xFF131316),
-                tonalElevation = 8.dp,
-                properties = DialogProperties(usePlatformDefaultWidth = true),
-                modifier = Modifier
-                    .border(1.dp, Color(0xFF26262B), RoundedCornerShape(28.dp))
-                    .testTag("google_account_picker_dialog")
-            )
         }
 
         if (showTermsDialog) {

@@ -33,6 +33,10 @@ class LuncViewModel(application: Application) : AndroidViewModel(application) {
     private val _marketData = MutableStateFlow(LuncMarketData())
     val marketData: StateFlow<LuncMarketData> = _marketData.asStateFlow()
 
+    // Real-Time Community Stats
+    private val _communityStats = MutableStateFlow(CommunityRealtimeStats())
+    val communityStats: StateFlow<CommunityRealtimeStats> = _communityStats.asStateFlow()
+
     private val httpClient = OkHttpClient.Builder().build()
 
     // UI States observed by Compose Screens
@@ -48,6 +52,39 @@ class LuncViewModel(application: Application) : AndroidViewModel(application) {
         }.launchIn(viewModelScope)
 
         refreshMarketData()
+
+        // Continuous Real-Time Updates (every 15 seconds for market ticker)
+        viewModelScope.launch {
+            while (true) {
+                kotlinx.coroutines.delay(15000)
+                refreshMarketData()
+            }
+        }
+
+        // Real-time ticking community simulation (every 1.5 seconds)
+        viewModelScope.launch {
+            val random = java.util.Random()
+            while (true) {
+                kotlinx.coroutines.delay(1500)
+                val current = _communityStats.value
+                val userPoints = currentUser.value?.points ?: 0
+                val incrementalBurn = (500 + random.nextInt(1000)).toLong()
+                val newUserBonusBurn = userPoints.toLong() * 1000L // 1 point = 1000 LUNC burned
+                val nextBurned = current.baseBurned + incrementalBurn
+                
+                val incrementalStaked = (random.nextInt(20000) - 10000).toLong()
+                val nextStaked = (current.baseStaked + incrementalStaked).coerceAtLeast(1000000000000L)
+                
+                val nextPeg = (current.baseUstcPeg + (random.nextDouble() * 0.04 - 0.02)).coerceIn(30.0, 45.0)
+                
+                _communityStats.value = current.copy(
+                    baseBurned = nextBurned,
+                    baseStaked = nextStaked,
+                    baseUstcPeg = nextPeg,
+                    userPointsContribution = newUserBonusBurn
+                )
+            }
+        }
     }
 
     fun refreshMarketData() {
@@ -261,4 +298,16 @@ class LuncViewModel(application: Application) : AndroidViewModel(application) {
             throw IllegalArgumentException("Unknown ViewModel class")
         }
     }
+}
+
+data class CommunityRealtimeStats(
+    val baseBurned: Long = 124520381942L,
+    val baseStaked: Long = 1081982736184L,
+    val baseUstcPeg: Double = 34.22,
+    val userPointsContribution: Long = 0L
+) {
+    val totalBurned: Long get() = baseBurned + userPointsContribution
+    val totalBurnedTarget: Long = 150000000000L
+    val burnPercentage: Float get() = (totalBurned.toFloat() / totalBurnedTarget.toFloat()).coerceIn(0f, 1f)
+    val stakingRatio: Float get() = 15.6f
 }
