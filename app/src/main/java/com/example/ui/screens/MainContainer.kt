@@ -48,6 +48,7 @@ fun MainContainer(
     val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
     val syncState by viewModel.syncState.collectAsStateWithLifecycle()
     val activeGameToPlay by viewModel.activeGameToPlay.collectAsStateWithLifecycle()
+    val marketData by viewModel.marketData.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
     val activity = context as? Activity
@@ -299,6 +300,8 @@ fun MainContainer(
                         when (currentTab) {
                             "DASH" -> DashboardScreen(
                                 user = user,
+                                marketData = marketData,
+                                onRefreshMarketData = { viewModel.refreshMarketData() },
                                 onWatchAdClicked = {
                                     if (activity != null) {
                                         LuncAdManager.showInterstitial(activity) {

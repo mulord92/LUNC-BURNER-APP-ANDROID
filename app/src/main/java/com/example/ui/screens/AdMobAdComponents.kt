@@ -28,6 +28,24 @@ import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 
 /**
+ * Robust check to detect if the standard WebView system service is fully operational.
+ * If WebView is missing, deactivated, or broken (common in virtualized runtimes),
+ * this returns false to safely bypass all AdMob/WebView initializations and avoid fatal background crashes.
+ */
+fun isWebViewSafe(context: Context): Boolean {
+    return try {
+        android.webkit.WebSettings.getDefaultUserAgent(context)
+        true
+    } catch (e: Exception) {
+        Log.e("AdMobAdComponents", "WebView service is missing or disabled: ${e.message}")
+        false
+    } catch (t: Throwable) {
+        Log.e("AdMobAdComponents", "WebView service load failed: ${t.message}")
+        false
+    }
+}
+
+/**
  * Singleton manager to securely load and present Google Mobile Ads Interstitial ads.
  */
 object LuncAdManager {
@@ -39,6 +57,10 @@ object LuncAdManager {
     private const val AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
 
     fun loadInterstitial(context: Context) {
+        if (!isWebViewSafe(context)) {
+            Log.w(TAG, "Skipping interstitial ad load: WebView is not safe/available.")
+            return
+        }
         if (mInterstitialAd != null || isAdLoading) return
         isAdLoading = true
         
@@ -113,7 +135,7 @@ fun AdMobBannerAd(
 ) {
     val context = LocalContext.current
     var isAdLoaded by remember { mutableStateOf(false) }
-    var hasError by remember { mutableStateOf(false) }
+    var hasError by remember { mutableStateOf(!isWebViewSafe(context)) }
 
     Card(
         colors = CardDefaults.cardColors(containerColor = Color(0xFF131316)),

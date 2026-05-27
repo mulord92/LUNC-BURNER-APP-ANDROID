@@ -31,9 +31,13 @@ import com.example.ui.Translations
 import com.example.ui.theme.OrangeFlameBright
 import com.example.ui.theme.GoldPoints
 
+import com.example.data.network.LuncMarketData
+
 @Composable
 fun DashboardScreen(
     user: UserEntity,
+    marketData: LuncMarketData,
+    onRefreshMarketData: () -> Unit,
     onWatchAdClicked: () -> Unit,
     syncStatusContent: @Composable () -> Unit
 ) {
@@ -184,6 +188,221 @@ fun DashboardScreen(
                             color = Color.White,
                             fontSize = 32.sp,
                             fontWeight = FontWeight.Black
+                        )
+                    }
+                }
+            }
+        }
+
+        // Real-Time LUNC Market Pulse Segment (Manual Refresh Mode)
+        item {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFF131316)
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("market_pulse_card"),
+                shape = RoundedCornerShape(24.dp),
+                border = BorderStroke(
+                    1.dp,
+                    Brush.verticalGradient(
+                        colors = listOf(Color(0xFF2E2E33), Color(0xFF0F0F11))
+                    )
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp)
+                ) {
+                    // Header row: Title + Manual Refresh Button
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "REAL-TIME MARKET PULSE",
+                                color = OrangeFlameBright,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.5.sp
+                            )
+                            Text(
+                                text = "Manual Refresh Mode",
+                                color = Color.Gray,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Normal
+                            )
+                        }
+
+                        // Refresh Button with indicator loading state
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFF1E1E24))
+                                .clickable(enabled = !marketData.isFetching) { onRefreshMarketData() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (marketData.isFetching) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    color = OrangeFlameBright,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = "Refresh Price",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // LUNC Coin Name Row
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(OrangeFlame.copy(alpha = 0.15f))
+                                .border(1.dp, OrangeFlameBright.copy(alpha = 0.5f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "Ł",
+                                color = OrangeFlameBright,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Black
+                            )
+                        }
+                        Text(
+                            text = "Terra Luna Classic (LUNC)",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Price and Percentage Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = marketData.formatPrice(),
+                            color = Color.White,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = (-0.5).sp
+                        )
+
+                        // 24H Price Change Status
+                        val positive = marketData.change24h >= 0
+                        val statusBg = if (positive) Color(0xFF1B3A2C) else Color(0xFF4C1D1D)
+                        val statusColor = if (positive) Color(0xFF3CD070) else Color(0xFFFF5F5F)
+                        val statusIcon = if (positive) Icons.Default.TrendingUp else Icons.Default.TrendingDown
+
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(statusBg)
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = statusIcon,
+                                contentDescription = if (positive) "Up" else "Down",
+                                tint = statusColor,
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Text(
+                                text = marketData.formatChange(),
+                                color = statusColor,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Grid stats: Market Cap and 24H Volume
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1E)),
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(14.dp)
+                            ) {
+                                Text(
+                                    text = "MARKET CAP",
+                                    color = Color.Gray,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.5.sp
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = marketData.formatMarketCap(),
+                                    color = Color.White,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Black
+                                )
+                            }
+                        }
+
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1E)),
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(14.dp)
+                            ) {
+                                Text(
+                                    text = "24H VOLUME",
+                                    color = Color.Gray,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.5.sp
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = marketData.formatVolume(),
+                                    color = Color.White,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Black
+                                )
+                            }
+                        }
+                    }
+
+                    if (marketData.errorMessage != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Note: Live ticker paused. Showing cached values (*)",
+                            color = Color.Yellow.copy(alpha = 0.6f),
+                            fontSize = 10.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }
