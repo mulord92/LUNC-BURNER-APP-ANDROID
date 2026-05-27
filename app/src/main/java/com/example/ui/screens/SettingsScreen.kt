@@ -257,6 +257,100 @@ fun SettingsScreen(
             }
         }
 
+        // Revenue Disclosure and Terms Card
+        item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF131316)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF26262B)),
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("settings_revenue_disclosure_card")
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "Terms, Statute & Privacy",
+                            tint = OrangeFlameBright,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = "TERMS, STATUTE & PRIVACY",
+                            color = OrangeFlameBright,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            letterSpacing = 1.sp
+                        )
+                    }
+
+                    // 1. REVENUE DISCLOSURE
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = com.example.ui.Translations.get("revenue_disclosure_title", user.language).uppercase(),
+                            color = Color.White,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 13.sp,
+                            letterSpacing = 0.5.sp
+                        )
+                        Text(
+                            text = com.example.ui.Translations.get("revenue_disclosure_body", user.language),
+                            color = Color(0xFFD4D4D8),
+                            fontSize = 11.sp,
+                            lineHeight = 16.sp,
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF26262B)))
+
+                    // 2. OFFICIAL STATUTE
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = com.example.ui.Translations.get("official_statute_title", user.language).uppercase(),
+                            color = Color.White,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 13.sp,
+                            letterSpacing = 0.5.sp
+                        )
+                        Text(
+                            text = com.example.ui.Translations.get("official_statute_body", user.language),
+                            color = Color(0xFFD4D4D8),
+                            fontSize = 11.sp,
+                            lineHeight = 16.sp,
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF26262B)))
+
+                    // 3. PRIVACY PROTECTION
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = com.example.ui.Translations.get("privacy_protection_title", user.language).uppercase(),
+                            color = Color.White,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 13.sp,
+                            letterSpacing = 0.5.sp
+                        )
+                        Text(
+                            text = com.example.ui.Translations.get("privacy_protection_body", user.language),
+                            color = Color(0xFFD4D4D8),
+                            fontSize = 11.sp,
+                            lineHeight = 16.sp,
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
+                }
+            }
+        }
+
         // Live Push Notifications / Updates Log Center (Satisfies "push notifications for real-time updates")
         item {
             Row(

@@ -41,7 +41,13 @@ object Translations {
             "proof" to "BURN PROOF CONTRACTS",
             "verified" to "VERIFIED TRANSFERS",
             "hash" to "TX GRAPH INDEX",
-            "amount" to "BURNT"
+            "amount" to "BURNT",
+            "revenue_disclosure_title" to "Revenue Disclosure",
+            "revenue_disclosure_body" to "All ecosystem revenue is distributed as follows: 40% for LUNC Buyout & Burn, 40% for Developers & Artists, and 20% for Infrastructure Taxes & Governance. By using this terminal, you agree to these allocation terms.",
+            "official_statute_title" to "Official Statute",
+            "official_statute_body" to "This application operates as a community-driven burn tracker for the LUNC ecosystem. All activities are voluntary and focused on reducing token supply through secondary market engagement.",
+            "privacy_protection_title" to "Privacy Protection",
+            "privacy_protection_body" to "We prioritize your data security. Authentication is handled by Firebase, and we only store minimal metrics required for mission tracking. No sensitive personal data is traded or leaked."
         ),
         "PL" to mapOf(
             "title" to "APLIKACJA SPALANIA LUNC",
@@ -82,7 +88,13 @@ object Translations {
             "proof" to "KONTRAKTY DOWODU SPALENIA",
             "verified" to "ZWERYFIKOWANE TRANSFERY",
             "hash" to "INDEKS HISTORII TX",
-            "amount" to "SPALONE"
+            "amount" to "SPALONE",
+            "revenue_disclosure_title" to "Ujawnienie Przychodów",
+            "revenue_disclosure_body" to "Wszystkie przychody ekosystemu są dystrybuowane w następujący sposób: 40% na wykup i spalanie LUNC, 40% dla deweloperów i artystów oraz 20% na podatki infrastrukturalne i zarządzanie. Korzystając z tego terminala, wyrażasz zgodę na te warunki alokacji.",
+            "official_statute_title" to "Oficjalny Statut",
+            "official_statute_body" to "Ta aplikacja działa jako społecznościowy tracker spalania dla ekosystemu LUNC. Wszystkie działania są dobrowolne i koncentrują się na zmniejszaniu podaży tokenów poprzez zaangażowanie na rynku wtórnym.",
+            "privacy_protection_title" to "Ochrona Prywatności",
+            "privacy_protection_body" to "Priorytetowo traktujemy bezpieczeństwo Twoich danych. Uwierzytelnianie jest obsługiwane przez Firebase i przechowujemy tylko minimalne dane wymagane do śledzenia misji. Żadne wrażliwe dane osobowe nie są sprzedawane ani wyciekane."
         ),
         "ZH" to mapOf(
             "title" to "LUNC 燃烧应用",
@@ -123,7 +135,13 @@ object Translations {
             "proof" to "加密销毁证明契约",
             "verified" to "经共识验证的转账",
             "hash" to "交易哈希索引",
-            "amount" to "销毁数量"
+            "amount" to "销毁数量",
+            "revenue_disclosure_title" to "收入披露声明",
+            "revenue_disclosure_body" to "所有生态系统收入分配如下：40% 用于 LUNC 回购与销毁，40% 用于开发者与艺术家，20% 用于基础设施税收与治理。使用本终端即表示您同意这些分配条款。",
+            "official_statute_title" to "官方章程",
+            "official_statute_body" to "本应用作为 LUNC 生态系统的社区驱动燃烧追踪器运行。所有活动均为自愿，并专注于通过二级市场参与减少代币供应量。",
+            "privacy_protection_title" to "隐私保护",
+            "privacy_protection_body" to "我们优先考虑您的数据安全。身份验证由 Firebase 处理，我们仅存储任务追踪所需的最低指标。绝不交易或泄露任何敏感个人数据。"
         ),
         "FR" to mapOf(
             "title" to "APPLICATION BURNC LUNC",
@@ -164,7 +182,13 @@ object Translations {
             "proof" to "CONTRATS DE PREUVE DE COMBUSTION",
             "verified" to "TRANSFERTS VÉRIFIÉS",
             "hash" to "INDEX DE TRANSACTION TX",
-            "amount" to "BRÛLÉ"
+            "amount" to "BRÛLÉ",
+            "revenue_disclosure_title" to "Divulgation des revenus",
+            "revenue_disclosure_body" to "Tous les revenus de l'écosystème sont distribués comme suit : 40% pour le rachat et la combustion de LUNC, 40% pour les développeurs et artistes, et 20% pour les taxes d'infrastructure et la gouvernance. En utilisant ce terminal, vous acceptez ces conditions d'allocation.",
+            "official_statute_title" to "Statut Officiel",
+            "official_statute_body" to "Cette application fonctionne comme un outil de suivi des brûlages géré par la communauté pour l'écosystème LUNC. Toutes les activités sont volontaires et axées sur la réduction de l'offre de jetons par le biais de l'engagement sur le marché secondaire.",
+            "privacy_protection_title" to "Protection de la Vie Privée",
+            "privacy_protection_body" to "Nous accordons la priorité à la sécurité de vos données. L'authentification est gérée par Firebase, et nous ne stockons que les mesures minimales requises pour le suivi des missions. Aucune donnée personnelle sensible n'est vendue ou dévoilée."
         ),
         "ES" to mapOf(
             "title" to "LUNC BURNER APP",
@@ -205,7 +229,13 @@ object Translations {
             "proof" to "CONTRATOS DE PRUEBA DE QUEMA",
             "verified" to "TRANSFERENCIAS VERIFICADAS",
             "hash" to "ÍNDICE DE TRANSACCIONES TX",
-            "amount" to "QUEMADO"
+            "amount" to "QUEMADO",
+            "revenue_disclosure_title" to "Divulgación de ingresos",
+            "revenue_disclosure_body" to "Todos los ingresos del ecosistema se distribuyen de la siguiente manera: 40% para la compra y quema de LUNC, 40% para desarrolladores y artistas, y 20% para impuestos de infraestructura y gobernanza. Al usar esta terminal, aceptas estos términos de asignación.",
+            "official_statute_title" to "Estatuto Oficial",
+            "official_statute_body" to "Esta aplicación opera como un rastreador de quema impulsado por la comunidad para el ecosistema LUNC. Todas las actividades son voluntarias y se centran en reducir la oferta de tokens a través de la participación en el mercado secundario.",
+            "privacy_protection_title" to "Protección de la Privacidad",
+            "privacy_protection_body" to "Priorizamos la seguridad de tus datos. La autenticación es manejada por Firebase y solo almacenamos las métricas mínimas requeridas para el seguimiento de la misión. No se comercializan ni se filtran datos personales confidenciales."
         )
     )
 

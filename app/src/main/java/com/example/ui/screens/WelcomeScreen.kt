@@ -61,6 +61,7 @@ fun WelcomeScreen(
     onEnterTerminal: (email: String, name: String) -> Unit
 ) {
     var isSigningIn by remember { mutableStateOf(false) }
+    var showTermsDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
@@ -452,11 +453,7 @@ fun WelcomeScreen(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.5.sp,
                         modifier = Modifier.clickable {
-                            try {
-                                uriHandler.openUri("https://policies.google.com/terms")
-                            } catch (e: Exception) {
-                                Toast.makeText(context, "Could not open link", Toast.LENGTH_SHORT).show()
-                            }
+                            showTermsDialog = true
                         }
                     )
                     Text("•", color = Color(0xFF52525B))
@@ -467,11 +464,7 @@ fun WelcomeScreen(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.5.sp,
                         modifier = Modifier.clickable {
-                            try {
-                                uriHandler.openUri("https://en.wikipedia.org/wiki/Statute")
-                            } catch (e: Exception) {
-                                Toast.makeText(context, "Could not open link", Toast.LENGTH_SHORT).show()
-                            }
+                            showTermsDialog = true
                         }
                     )
                     Text("•", color = Color(0xFF52525B))
@@ -482,15 +475,103 @@ fun WelcomeScreen(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.5.sp,
                         modifier = Modifier.clickable {
-                            try {
-                                uriHandler.openUri("https://policies.google.com/privacy")
-                            } catch (e: Exception) {
-                                Toast.makeText(context, "Could not open link", Toast.LENGTH_SHORT).show()
-                            }
+                            showTermsDialog = true
                         }
                     )
                 }
             }
+        }
+
+        if (showTermsDialog) {
+            AlertDialog(
+                onDismissRequest = { showTermsDialog = false },
+                title = {
+                    Text(
+                        text = "TERMS, STATUTE & PRIVACY",
+                        color = OrangeFlameBright,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                },
+                text = {
+                    Column(
+                        modifier = Modifier
+                            .verticalScroll(rememberScrollState())
+                            .padding(vertical = 4.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        // REVENUE DISCLOSURE
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                text = Translations.get("revenue_disclosure_title", selectedLanguage).uppercase(),
+                                color = Color.White,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Black
+                            )
+                            Text(
+                                text = Translations.get("revenue_disclosure_body", selectedLanguage),
+                                color = Color(0xFFD4D4D8),
+                                fontSize = 11.sp,
+                                lineHeight = 16.sp,
+                                fontWeight = FontWeight.Normal
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF26262B)))
+
+                        // OFFICIAL STATUTE
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                text = Translations.get("official_statute_title", selectedLanguage).uppercase(),
+                                color = Color.White,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Black
+                            )
+                            Text(
+                                text = Translations.get("official_statute_body", selectedLanguage),
+                                color = Color(0xFFD4D4D8),
+                                fontSize = 11.sp,
+                                lineHeight = 16.sp,
+                                fontWeight = FontWeight.Normal
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF26262B)))
+
+                        // PRIVACY PROTECTION
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                text = Translations.get("privacy_protection_title", selectedLanguage).uppercase(),
+                                color = Color.White,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Black
+                            )
+                            Text(
+                                text = Translations.get("privacy_protection_body", selectedLanguage),
+                                color = Color(0xFFD4D4D8),
+                                fontSize = 11.sp,
+                                lineHeight = 16.sp,
+                                fontWeight = FontWeight.Normal
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = { showTermsDialog = false },
+                        colors = ButtonDefaults.textButtonColors(contentColor = OrangeFlameBright)
+                    ) {
+                        Text("CONFIRM DECENTRALIZED PROTOCOLS", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    }
+                },
+                containerColor = Color(0xFF131316),
+                tonalElevation = 6.dp,
+                properties = DialogProperties(usePlatformDefaultWidth = true),
+                modifier = Modifier
+                    .border(1.dp, Color(0xFF26262B), RoundedCornerShape(28.dp))
+                    .testTag("welcome_revenue_disclosure_card")
+            )
         }
     }
 }
