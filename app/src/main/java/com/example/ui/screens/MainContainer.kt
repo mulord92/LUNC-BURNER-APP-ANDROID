@@ -389,6 +389,9 @@ fun MainContainer(
                                 },
                                 onClaimPoints = { gameId ->
                                     viewModel.claimPoints(gameId)
+                                },
+                                onAwardPoints = { points ->
+                                    viewModel.awardQuizPoints(points)
                                 }
                             )
                             "DAILY" -> DailyChallengeScreen(

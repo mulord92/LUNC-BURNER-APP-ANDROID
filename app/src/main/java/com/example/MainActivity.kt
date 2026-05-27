@@ -23,6 +23,19 @@ class MainActivity : ComponentActivity() {
 
     // Initialize Google Mobile Ads SDK for AdSense / AdMob safely
     if (isWebViewSafe(this)) {
+      // Ensure local WebView cache sub-directories exist to prevent Chromium file enumerator warning logs
+      try {
+        val cacheBase = cacheDir
+        if (cacheBase != null) {
+          val jsDir = java.io.File(cacheBase, "WebView/Default/HTTP Cache/Code Cache/js")
+          val wasmDir = java.io.File(cacheBase, "WebView/Default/HTTP Cache/Code Cache/wasm")
+          if (!jsDir.exists()) jsDir.mkdirs()
+          if (!wasmDir.exists()) wasmDir.mkdirs()
+        }
+      } catch (e: Exception) {
+        android.util.Log.e("MainActivity", "Error preparing WebView cache dirs", e)
+      }
+
       try {
         MobileAds.initialize(this) {
           try {

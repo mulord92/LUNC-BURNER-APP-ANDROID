@@ -212,6 +212,12 @@ class LuncViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun awardQuizPoints(points: Int) {
+        viewModelScope.launch {
+            repository.awardQuizPoints(points)
+        }
+    }
+
     fun toggleDarkMode(enabled: Boolean) {
         viewModelScope.launch {
             val user = currentUser.value ?: return@launch

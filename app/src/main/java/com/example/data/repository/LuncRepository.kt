@@ -294,6 +294,29 @@ class LuncRepository(
         userDao.insertOrUpdateUser(user.copy(darkModeEnabled = enabled))
     }
 
+    suspend fun awardQuizPoints(points: Int): Boolean {
+        val user = userDao.getUser() ?: return false
+        val newPoints = user.points + points
+        val newDailyClaimed = (user.dailyPointsClaimed + points).coerceAtMost(user.dailyPointsTarget)
+        val newRank = (42 - (newPoints / 100)).coerceAtLeast(1)
+        
+        userDao.insertOrUpdateUser(user.copy(
+            points = newPoints,
+            dailyPointsClaimed = newDailyClaimed,
+            engagementRank = newRank
+        ))
+        
+        addChainBurnLog("Burning Quiz", points)
+        
+        sendLocalNotification(
+            title = "Quiz Correct Answer! 🎉",
+            body = "Earned +$points points towards LUNC Burn! Total: $newPoints"
+        )
+        
+        triggerSync()
+        return true
+    }
+
     suspend fun toggleNotifications(enabled: Boolean) {
         val user = userDao.getUser() ?: return
         userDao.insertOrUpdateUser(user.copy(notificationsEnabled = enabled))
