@@ -87,14 +87,12 @@ fun WelcomeScreen(
         coroutineScope.launch {
             val isReg = onCheckEmailRegistered(email)
             isSigningIn = false
-            if (isReg) {
+            if (!isReg) {
+                Toast.makeText(context, "Account successfully registered. Welcome $name!", Toast.LENGTH_SHORT).show()
                 onEnterTerminal(email, name, photoUrl)
-                Toast.makeText(context, "Welcome $name ($method)!", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(context, "Account not registered. Please register.", Toast.LENGTH_LONG).show()
-                activeTab = 1
-                registerEmail = email
-                registerName = name
+                Toast.makeText(context, "Welcome back $name ($method)!", Toast.LENGTH_SHORT).show()
+                onEnterTerminal(email, name, photoUrl)
             }
         }
     }
@@ -729,8 +727,8 @@ fun WelcomeScreen(
                                                     .addOnFailureListener { fallbackErr ->
                                                         isSigningIn = false
                                                         val msg = fallbackErr.localizedMessage ?: ""
-                                                        val cause = if (msg.contains("get your package")) {
-                                                            "App not authorized in Firebase. You must add the SHA-1 to the Firebase Console: CE:01:66:70:14:16:4D:B3:36:FC:4A:DF:0D:05:DF:2E:70:73:2A:EC for package com.aistudio.luncburner.vuxjqp."
+                                                        val cause = if (msg.contains("get your package") || msg.contains("10:")) {
+                                                            "Firebase Auth error: Missing SHA-1 in Firebase Console. You MUST add the new SHA-1 to your Firebase Project: 25:34:24:DD:8B:BB:22:9F:75:84:30:6C:DB:13:52:A7:33:14:6F:25 for package com.aistudio.luncburner.vuxjqp. Re-download google-services.json afterwards."
                                                         } else {
                                                             msg
                                                         }
