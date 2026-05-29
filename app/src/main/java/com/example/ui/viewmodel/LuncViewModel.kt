@@ -37,7 +37,11 @@ class LuncViewModel(application: Application) : AndroidViewModel(application) {
     private val _communityStats = MutableStateFlow(CommunityRealtimeStats())
     val communityStats: StateFlow<CommunityRealtimeStats> = _communityStats.asStateFlow()
 
-    private val httpClient = OkHttpClient.Builder().build()
+    private val httpClient = OkHttpClient.Builder()
+        .connectTimeout(3, java.util.concurrent.TimeUnit.SECONDS)
+        .readTimeout(3, java.util.concurrent.TimeUnit.SECONDS)
+        .writeTimeout(3, java.util.concurrent.TimeUnit.SECONDS)
+        .build()
 
     // UI States observed by Compose Screens
     val currentUser: StateFlow<UserEntity?> = repository.currentUser
@@ -201,11 +205,15 @@ class LuncViewModel(application: Application) : AndroidViewModel(application) {
     private val _activeGameToPlay = MutableStateFlow<GameProgressEntity?>(null)
     val activeGameToPlay: StateFlow<GameProgressEntity?> = _activeGameToPlay.asStateFlow()
 
-    fun login(email: String, name: String) {
+    fun login(email: String, name: String, profilePicUrl: String = "") {
         viewModelScope.launch {
-            repository.login(email, name)
+            repository.login(email, name, profilePicUrl)
             repository.updateLanguage(_selectedLanguage.value)
         }
+    }
+
+    suspend fun isEmailRegistered(email: String): Boolean {
+        return repository.isEmailRegistered(email)
     }
 
     fun updateLanguage(lang: String) {

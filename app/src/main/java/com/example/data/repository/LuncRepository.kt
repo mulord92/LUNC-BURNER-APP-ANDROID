@@ -128,16 +128,18 @@ class LuncRepository(
         }
     }
 
-    suspend fun login(email: String, name: String): Boolean {
+    suspend fun login(email: String, name: String, profilePicUrl: String = ""): Boolean {
         // Secure Login / Simulation Cache
         val existingUser = userDao.getUser()
         val user = existingUser?.copy(
             email = email,
             name = name,
+            profilePicUrl = profilePicUrl,
             isLoggedIn = true
         ) ?: UserEntity(
             email = email,
             name = name,
+            profilePicUrl = profilePicUrl,
             isLoggedIn = true
         )
         
@@ -150,6 +152,11 @@ class LuncRepository(
         )
         triggerSync()
         return true
+    }
+
+    suspend fun isEmailRegistered(email: String): Boolean {
+        val user = userDao.getUser()
+        return user != null && user.email.isNotBlank() && user.email.trim().equals(email.trim(), ignoreCase = true)
     }
 
     suspend fun logout() {

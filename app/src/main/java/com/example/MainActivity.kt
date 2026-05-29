@@ -10,6 +10,7 @@ import com.example.ui.screens.MainContainer
 import com.example.ui.screens.LuncAdManager
 import com.example.ui.screens.isWebViewSafe
 import com.example.ui.viewmodel.LuncViewModel
+import com.example.util.FirebaseConfigLoader
 import com.google.android.gms.ads.MobileAds
 
 class MainActivity : ComponentActivity() {
@@ -20,6 +21,9 @@ class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
+
+    // Initialize Firebase dynamically from asset JSON config or custom Secrets settings
+    FirebaseConfigLoader.initializeFirebase(this)
 
     // Initialize Google Mobile Ads SDK for AdSense / AdMob safely
     if (isWebViewSafe(this)) {

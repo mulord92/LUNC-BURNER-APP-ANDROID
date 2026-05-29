@@ -1,0 +1,76 @@
+{
+  "project_info": {
+    "project_number": "529901897913",
+    "project_id": "luna-burner",
+    "storage_bucket": "luna-burner.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:529901897913:android:6d67534735baab22a6b368",
+        "android_client_info": {
+          "package_name": "com.aistudio.luncburner.vuxjqp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "529901897913-3rmlruto2u8cmqahlq0gspqgkok98m4l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aistudio.luncburner.vuxjqp",
+            "certificate_hash": "ce01667014164db336fc4adf0d05df2e70732aec"
+          }
+        },
+        {
+          "client_id": "529901897913-n1d8k9dv4kvdhg376ig8g51ugnh80ghv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBc4-lRKtKS8oEPukN3xoh5C4dYCXH6lJs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "529901897913-n1d8k9dv4kvdhg376ig8g51ugnh80ghv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:529901897913:android:f23e43049027acd4a6b368",
+        "android_client_info": {
+          "package_name": "lunaburner.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "529901897913-n1d8k9dv4kvdhg376ig8g51ugnh80ghv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBc4-lRKtKS8oEPukN3xoh5C4dYCXH6lJs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "529901897913-n1d8k9dv4kvdhg376ig8g51ugnh80ghv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

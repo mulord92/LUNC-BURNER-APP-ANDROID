@@ -27,10 +27,13 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import androidx.credentials.CustomCredential
 import com.example.BuildConfig
 import kotlinx.coroutines.launch
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
@@ -60,14 +63,11 @@ import com.example.ui.theme.OrangeFlameDark
 fun WelcomeScreen(
     selectedLanguage: String,
     onLanguageChange: (String) -> Unit,
-    onEnterTerminal: (email: String, name: String) -> Unit
+    onEnterTerminal: (email: String, name: String, profilePicUrl: String) -> Unit,
+    onCheckEmailRegistered: suspend (String) -> Boolean
 ) {
     var isSigningIn by remember { mutableStateOf(false) }
     var showTermsDialog by remember { mutableStateOf(false) }
-    var showGooglePicker by remember { mutableStateOf(false) }
-    var customEmailInput by remember { mutableStateOf("") }
-    var customNameInput by remember { mutableStateOf("") }
-    var showCustomAccountForm by remember { mutableStateOf(false) }
 
     // Pristine state variables for Login & Register Tabs
     var activeTab by remember { mutableStateOf(0) } // 0 = Sign In, 1 = Register
@@ -82,6 +82,22 @@ fun WelcomeScreen(
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
+
+    val handleGoogleSuccess = { email: String, name: String, photoUrl: String, method: String ->
+        coroutineScope.launch {
+            val isReg = onCheckEmailRegistered(email)
+            isSigningIn = false
+            if (isReg) {
+                onEnterTerminal(email, name, photoUrl)
+                Toast.makeText(context, "Welcome $name ($method)!", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, "Account not registered. Please register.", Toast.LENGTH_LONG).show()
+                activeTab = 1
+                registerEmail = email
+                registerName = name
+            }
+        }
+    }
 
     // Pulsing flame size animation for immersive background
     val infiniteTransition = rememberInfiniteTransition(label = "flame")
@@ -443,8 +459,19 @@ fun WelcomeScreen(
                                 if (loginEmail.isNotBlank()) {
                                     val email = loginEmail.trim()
                                     val fallbackName = email.substringBefore("@").replaceFirstChar { it.uppercase() }
-                                    onEnterTerminal(email, fallbackName)
-                                    Toast.makeText(context, "Welcome back, $fallbackName!", Toast.LENGTH_SHORT).show()
+                                    
+                                    coroutineScope.launch {
+                                        val isReg = onCheckEmailRegistered(email)
+                                        if (isReg) {
+                                            onEnterTerminal(email, fallbackName, "")
+                                            Toast.makeText(context, "Welcome back, $fallbackName!", Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            Toast.makeText(context, "Account not registered. Please register.", Toast.LENGTH_LONG).show()
+                                            activeTab = 1
+                                            registerEmail = email
+                                            registerName = fallbackName
+                                        }
+                                    }
                                 } else {
                                     Toast.makeText(context, "Please enter your email", Toast.LENGTH_SHORT).show()
                                 }
@@ -560,7 +587,7 @@ fun WelcomeScreen(
                                 if (registerEmail.isNotBlank() && registerName.isNotBlank()) {
                                     val email = registerEmail.trim()
                                     val name = registerName.trim()
-                                    onEnterTerminal(email, name)
+                                    onEnterTerminal(email, name, "")
                                     Toast.makeText(context, "Node Profile registered for $name!", Toast.LENGTH_SHORT).show()
                                 } else {
                                     Toast.makeText(context, "Please fill out all fields", Toast.LENGTH_SHORT).show()
@@ -624,15 +651,12 @@ fun WelcomeScreen(
                             onClick = {
                                 isSigningIn = true
                                 val credentialManager = CredentialManager.create(context)
-                                val clientId = if (BuildConfig.GOOGLE_CLIENT_ID == "your_google_client_id_here" || BuildConfig.GOOGLE_CLIENT_ID.isBlank()) {
-                                    "854611283624-placeholder.apps.googleusercontent.com"
-                                } else {
-                                    BuildConfig.GOOGLE_CLIENT_ID
-                                }
+                                val clientId = com.example.util.FirebaseConfigLoader.getGoogleClientId(context)
 
                                 val googleIdOption = GetGoogleIdOption.Builder()
                                     .setFilterByAuthorizedAccounts(false)
                                     .setServerClientId(clientId)
+                                    .setAutoSelectEnabled(false)
                                     .build()
 
                                 val request = GetCredentialRequest.Builder()
@@ -650,20 +674,82 @@ fun WelcomeScreen(
                                             val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
                                             val signedEmail = googleIdTokenCredential.id
                                             val signedName = googleIdTokenCredential.displayName ?: googleIdTokenCredential.givenName ?: "Google User"
-                                            isSigningIn = false
-                                            onEnterTerminal(signedEmail, signedName)
-                                            Toast.makeText(context, "Welcome $signedName!", Toast.LENGTH_SHORT).show()
+                                            val profilePictureUri = googleIdTokenCredential.profilePictureUri?.toString() ?: ""
+                                            val idToken = googleIdTokenCredential.idToken
+                                            
+                                            if (!idToken.isNullOrBlank()) {
+                                                isSigningIn = true
+                                                try {
+                                                    val firebaseAuth = FirebaseAuth.getInstance()
+                                                    val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
+                                                    firebaseAuth.signInWithCredential(firebaseCredential)
+                                                        .addOnCompleteListener { task ->
+                                                            if (task.isSuccessful) {
+                                                                val firebaseUser = task.result?.user
+                                                                val email = firebaseUser?.email ?: signedEmail
+                                                                val name = firebaseUser?.displayName ?: signedName
+                                                                val photoUrl = firebaseUser?.photoUrl?.toString() ?: profilePictureUri
+                                                                handleGoogleSuccess(email, name, photoUrl, "Firebase Connected")
+                                                            } else {
+                                                                val err = task.exception?.localizedMessage ?: "Firebase login failed"
+                                                                Toast.makeText(context, "Firebase Sign-In failed: $err. Falling back to offline...", Toast.LENGTH_LONG).show()
+                                                                handleGoogleSuccess(signedEmail, signedName, profilePictureUri, "Offline")
+                                                            }
+                                                        }
+                                                } catch (exc: Exception) {
+                                                    handleGoogleSuccess(signedEmail, signedName, profilePictureUri, "Offline (Firebase Uninitialized)")
+                                                }
+                                            } else {
+                                                handleGoogleSuccess(signedEmail, signedName, profilePictureUri, "Offline")
+                                            }
                                         } else {
                                             isSigningIn = false
                                             Toast.makeText(context, "Unsupported credential format.", Toast.LENGTH_LONG).show()
                                         }
                                     } catch (e: GetCredentialException) {
-                                        isSigningIn = false
-                                        val errString = e.localizedMessage ?: e.message ?: "Unknown error"
-                                        Toast.makeText(context, "Google Sign-In Cancelled / Unavailable on this environment.", Toast.LENGTH_LONG).show()
+                                        try {
+                                            val firebaseAuth = FirebaseAuth.getInstance()
+                                            val provider = com.google.firebase.auth.OAuthProvider.newBuilder("google.com").build()
+                                            val activity = context as? android.app.Activity
+                                            if (activity != null) {
+                                                firebaseAuth.startActivityForSignInWithProvider(activity, provider)
+                                                    .addOnSuccessListener { authResult ->
+                                                        val user = authResult.user
+                                                        if (user != null) {
+                                                            handleGoogleSuccess(
+                                                                user.email ?: "",
+                                                                user.displayName ?: "Google User",
+                                                                user.photoUrl?.toString() ?: "",
+                                                                "Firebase Web"
+                                                            )
+                                                        } else {
+                                                            isSigningIn = false
+                                                        }
+                                                    }
+                                                    .addOnFailureListener { fallbackErr ->
+                                                        isSigningIn = false
+                                                        val msg = fallbackErr.localizedMessage ?: ""
+                                                        val cause = if (msg.contains("get your package")) {
+                                                            "App not authorized in Firebase. You must add the SHA-1 to the Firebase Console: CE:01:66:70:14:16:4D:B3:36:FC:4A:DF:0D:05:DF:2E:70:73:2A:EC for package com.aistudio.luncburner.vuxjqp."
+                                                        } else {
+                                                            msg
+                                                        }
+                                                        Toast.makeText(context, "Web Sign-In failed: $cause", Toast.LENGTH_LONG).show()
+                                                    }
+                                            } else {
+                                                isSigningIn = false
+                                                val errString = e.localizedMessage ?: e.message ?: "Unknown error"
+                                                Toast.makeText(context, "Native Sign-In failed: $errString", Toast.LENGTH_LONG).show()
+                                            }
+                                        } catch (fallbackEx: Exception) {
+                                            isSigningIn = false
+                                            val errString = e.localizedMessage ?: e.message ?: "Unknown error"
+                                            Toast.makeText(context, "Google Sign-In failed: $errString", Toast.LENGTH_LONG).show()
+                                        }
                                     } catch (e: Exception) {
                                         isSigningIn = false
-                                        Toast.makeText(context, "Google Sign-In Exception: ${e.message}", Toast.LENGTH_LONG).show()
+                                        val errString = e.localizedMessage ?: e.message ?: "Unknown error"
+                                        Toast.makeText(context, "Google Sign-In failed: $errString", Toast.LENGTH_LONG).show()
                                     }
                                 }
                             },

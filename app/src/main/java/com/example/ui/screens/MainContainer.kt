@@ -94,8 +94,11 @@ fun MainContainer(
             WelcomeScreen(
                 selectedLanguage = selectedLanguage,
                 onLanguageChange = { viewModel.updateLanguage(it) },
-                onEnterTerminal = { email, name ->
-                    viewModel.login(email, name)
+                onEnterTerminal = { email, name, profilePicUrl ->
+                    viewModel.login(email, name, profilePicUrl)
+                },
+                onCheckEmailRegistered = { email ->
+                    viewModel.isEmailRegistered(email)
                 }
             )
         }
@@ -295,12 +298,21 @@ fun MainContainer(
                                         .border(1.dp, OrangeFlameBright, CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Person,
-                                        contentDescription = "Avatar",
-                                        tint = OrangeFlameBright,
-                                        modifier = Modifier.size(18.dp)
-                                    )
+                                    if (!user.profilePicUrl.isNullOrBlank()) {
+                                        coil.compose.AsyncImage(
+                                            model = user.profilePicUrl,
+                                            contentDescription = "Avatar",
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Default.Person,
+                                            contentDescription = "Avatar",
+                                            tint = OrangeFlameBright,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
