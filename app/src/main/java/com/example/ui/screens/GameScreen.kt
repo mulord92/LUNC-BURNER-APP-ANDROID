@@ -75,6 +75,10 @@ fun GameScreen(
     var planeVelocity by remember { mutableStateOf(0.0f) }
     var planePillars by remember { mutableStateOf(listOf<Triple<Float, Float, Boolean>>()) } // x, gapCenterY, passedYet
 
+    // Popups and Particle System for playability feedback and visual juice
+    var scorePopups by remember { mutableStateOf(listOf<PopupEffect>()) }
+    var particles by remember { mutableStateOf(listOf<ParticleEffect>()) }
+
     // Main Game Loop timer
     LaunchedEffect(isPlaying, crashed) {
         if (!isPlaying || crashed) return@LaunchedEffect
@@ -177,8 +181,9 @@ fun GameScreen(
                     }
                 }
                 "chain_linker" -> {
-                    // move nodes
-                    linkerNodes = linkerNodes.map { Triple(it.first, it.second + 0.015f, it.third) }
+                    // move nodes at interactive and fun dynamic speed
+                    val currentSpeed = 0.012f + (score.toFloat() / 2000f) * 0.005f
+                    linkerNodes = linkerNodes.map { Triple(it.first, it.second + currentSpeed.coerceAtMost(0.018f), it.third) }
 
                     // miss check: valid node past standard height
                     val missedNodes = linkerNodes.filter { it.second >= 0.92f }
@@ -187,6 +192,25 @@ fun GameScreen(
                     val validMissedCount = missedNodes.count { it.third }
                     if (validMissedCount > 0) {
                         shields -= validMissedCount
+                        missedNodes.forEach { node ->
+                            if (node.third) {
+                                // Add popup for miss!
+                                scorePopups = scorePopups + PopupEffect(node.first, 0.85f, "MISS!", Color(0xFFEF5350), 20)
+                                // Particle burst on miss
+                                particles = particles + (1..6).map {
+                                    ParticleEffect(
+                                        x = node.first,
+                                        y = 0.85f,
+                                        vx = (Random.nextFloat() - 0.5f) * 0.015f,
+                                        vy = (Random.nextFloat() - 0.5f) * 0.015f,
+                                        color = Color(0xFFEF5350),
+                                        size = Random.nextFloat() * 6f + 3f,
+                                        maxTicks = 12,
+                                        ticks = 12
+                                    )
+                                }
+                            }
+                        }
                         if (shields <= 0) {
                             crashed = true
                             isPlaying = false
@@ -202,7 +226,7 @@ fun GameScreen(
                             1 -> 0.50f
                             else -> 0.75f
                         }
-                        val isValid = Random.nextFloat() < 0.70f // 70% connection nodes, 30% virus
+                        val isValid = Random.nextFloat() < 0.75f // 75% connection nodes, 25% virus (more playable)
                         linkerNodes = linkerNodes + Triple(laneX, 0.0f, isValid)
                     }
 
@@ -215,8 +239,8 @@ fun GameScreen(
                     }
                 }
                 "plane" -> {
-                    // gravity pull
-                    planeVelocity += 0.0016f
+                    // smoother gravity pull
+                    planeVelocity += 0.0013f
                     planeY = (planeY + planeVelocity).coerceIn(-0.02f, 1.02f)
 
                     if (planeY <= 0.01f || planeY >= 0.95f) {
@@ -225,8 +249,8 @@ fun GameScreen(
                         isPlaying = false
                     }
 
-                    // speed scroll candlesticks
-                    planePillars = planePillars.map { Triple(it.first - 0.0085f, it.second, it.third) }
+                    // speed scroll candlesticks (green/red candles)
+                    planePillars = planePillars.map { Triple(it.first - 0.008f, it.second, it.third) }
 
                     // plane vs obstacle collision
                     val updatedPillars = mutableListOf<Triple<Float, Float, Boolean>>()
@@ -236,11 +260,14 @@ fun GameScreen(
                         val passed = pillar.third
 
                         // player coordinate centered at X = 0.25f
-                        if (px >= 0.21f && px <= 0.29f) {
-                            val halfGap = 0.13f
+                        if (px >= 0.20f && px <= 0.30f) {
+                            val halfGap = 0.15f // slightly larger gap for playability
                             val topPillarLimit = gapCenter - halfGap
                             val bottomPillarLimit = gapCenter + halfGap
-                            if (planeY < topPillarLimit || planeY > bottomPillarLimit) {
+                            
+                            // 1.8% grace margin buffer representing the visual body of the plane
+                            val graceMargin = 0.018f
+                            if (planeY < (topPillarLimit + graceMargin) || planeY > (bottomPillarLimit - graceMargin)) {
                                 shields = 0
                                 crashed = true
                                 isPlaying = false
@@ -250,18 +277,51 @@ fun GameScreen(
                         if (px < 0.21f && !passed) {
                             score += 20
                             updatedPillars.add(Triple(px, gapCenter, true))
+                            // Successful pass feedback popups & glowing green bubble particles
+                            scorePopups = scorePopups + PopupEffect(0.25f, planeY, "+20", Color(0xFF66BB6A), 20)
+                            particles = particles + (1..10).map {
+                                ParticleEffect(
+                                    x = 0.25f,
+                                    y = planeY,
+                                    vx = -(Random.nextFloat() * 0.015f + 0.005f),
+                                    vy = (Random.nextFloat() - 0.5f) * 0.015f,
+                                    color = Color(0xFF66BB6A),
+                                    size = Random.nextFloat() * 8f + 3f,
+                                    maxTicks = 12,
+                                    ticks = 12
+                                )
+                            }
                         } else {
                             updatedPillars.add(pillar)
                         }
                     }
                     planePillars = updatedPillars.filter { it.first > -0.1f }
 
-                    // spawn pillars
-                    if (tickCount == 1 || tickCount % 78 == 0) {
+                    // spawn pillars at interactive distances
+                    if (tickCount == 1 || tickCount % 84 == 0) {
                         planePillars = planePillars + Triple(1.0f, Random.nextFloat().coerceIn(0.25f, 0.75f), false)
+                    }
+
+                    // Rocket Plane smoke/flame engine particle stream!
+                    if (tickCount % 2 == 0) {
+                        val offsetColor = if (Random.nextBoolean()) OrangeFlameBright else OrangeFlame
+                        particles = particles + ParticleEffect(
+                            x = 0.23f,
+                            y = planeY + (Random.nextFloat() - 0.5f) * 0.02f,
+                            vx = -(Random.nextFloat() * 0.012f + 0.006f),
+                            vy = (Random.nextFloat() - 0.5f) * 0.004f,
+                            color = offsetColor.copy(alpha = 0.82f),
+                            size = Random.nextFloat() * 7f + 3f,
+                            maxTicks = 10,
+                            ticks = 10
+                        )
                     }
                 }
             }
+
+            // General effects update loop
+            scorePopups = scorePopups.map { it.copy(y = it.y - 0.006f, ticks = it.ticks - 1) }.filter { it.ticks > 0 }
+            particles = particles.map { it.copy(x = it.x + it.vx, y = it.y + it.vy, ticks = it.ticks - 1) }.filter { it.ticks > 0 }
         }
     }
 
@@ -404,24 +464,79 @@ fun GameScreen(
                                             1 -> 0.50f
                                             else -> 0.75f
                                         }
+                                        // slightly more generous target alignment height for comfortable tapping
                                         val hitTarget = linkerNodes.firstOrNull {
-                                            it.first == targetX && it.second >= 0.70f && it.second <= 0.93f
+                                            it.first == targetX && it.second >= 0.64f && it.second <= 0.94f
                                         }
                                         if (hitTarget != null) {
                                             linkerNodes = linkerNodes - hitTarget
                                             if (hitTarget.third) {
                                                 score += 15
+                                                scorePopups = scorePopups + PopupEffect(targetX, 0.83f, "+15 SUCCESS", Color(0xFF4FC3F7), 20)
+                                                particles = particles + (1..10).map {
+                                                    ParticleEffect(
+                                                        x = targetX,
+                                                        y = 0.83f,
+                                                        vx = (Random.nextFloat() - 0.5f) * 0.024f,
+                                                        vy = (Random.nextFloat() - 0.5f) * 0.024f,
+                                                        color = Color(0xFF4FC3F7),
+                                                        size = Random.nextFloat() * 10f + 5f,
+                                                        maxTicks = 14,
+                                                        ticks = 14
+                                                    )
+                                                }
                                             } else {
                                                 shields -= 1
+                                                scorePopups = scorePopups + PopupEffect(targetX, 0.83f, "-1 SHIELD", Color(0xFFEF5350), 20)
+                                                particles = particles + (1..12).map {
+                                                    ParticleEffect(
+                                                        x = targetX,
+                                                        y = 0.83f,
+                                                        vx = (Random.nextFloat() - 0.5f) * 0.03f,
+                                                        vy = (Random.nextFloat() - 0.5f) * 0.03f,
+                                                        color = Color(0xFFEF5350),
+                                                        size = Random.nextFloat() * 11f + 5f,
+                                                        maxTicks = 15,
+                                                        ticks = 15
+                                                    )
+                                                }
                                                 if (shields <= 0) {
                                                     crashed = true
                                                     isPlaying = false
                                                 }
                                             }
+                                        } else {
+                                            // Empty tap visual feedback core shimmer
+                                            particles = particles + (1..4).map {
+                                                ParticleEffect(
+                                                    x = targetX,
+                                                    y = 0.83f,
+                                                    vx = (Random.nextFloat() - 0.5f) * 0.015f,
+                                                    vy = (Random.nextFloat() - 0.5f) * 0.015f,
+                                                    color = Color.LightGray.copy(alpha = 0.4f),
+                                                    size = Random.nextFloat() * 6f + 3f,
+                                                    maxTicks = 8,
+                                                    ticks = 8
+                                                )
+                                            }
                                         }
                                     }
                                     "plane" -> {
-                                        planeVelocity = -0.040f
+                                        // smoother thrust impulse physics
+                                        planeVelocity = -0.028f
+                                        // jump puff visual effects
+                                        particles = particles + (1..5).map {
+                                            ParticleEffect(
+                                                x = 0.25f,
+                                                y = planeY,
+                                                vx = (Random.nextFloat() - 0.5f) * 0.005f - 0.005f,
+                                                vy = (Random.nextFloat() - 0.5f) * 0.005f + 0.004f,
+                                                color = Color.White.copy(alpha = 0.5f),
+                                                size = Random.nextFloat() * 5f + 2f,
+                                                maxTicks = 8,
+                                                ticks = 8
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -619,27 +734,57 @@ fun GameScreen(
                                 val socketY = size.height * 0.83f
                                 val diameter = 45f
 
-                                // Left channel target ring
+                                val lHasTarget = linkerNodes.any { it.first == 0.25f && it.second >= 0.64f && it.second <= 0.94f }
+                                val cHasTarget = linkerNodes.any { it.first == 0.50f && it.second >= 0.64f && it.second <= 0.94f }
+                                val rHasTarget = linkerNodes.any { it.first == 0.75f && it.second >= 0.64f && it.second <= 0.94f }
+
+                                // Left channel target ring with helper pulse
                                 drawCircle(
                                     color = if (lastLaneTapped == 0) litLane else colLane,
                                     radius = diameter,
                                     center = Offset(lPos, socketY),
                                     style = androidx.compose.ui.graphics.drawscope.Stroke(width = if (lastLaneTapped == 0) 6f else 2f)
                                 )
-                                // Center channel target ring
+                                if (lHasTarget) {
+                                    drawCircle(
+                                        color = Color(0xFF38BDF8).copy(alpha = 0.4f),
+                                        radius = diameter + 12f,
+                                        center = Offset(lPos, socketY),
+                                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f)
+                                    )
+                                }
+
+                                // Center channel target ring with helper pulse
                                 drawCircle(
                                     color = if (lastLaneTapped == 1) litLane else colLane,
                                     radius = diameter,
                                     center = Offset(cPos, socketY),
                                     style = androidx.compose.ui.graphics.drawscope.Stroke(width = if (lastLaneTapped == 1) 6f else 2f)
                                 )
-                                // Right channel target ring
+                                if (cHasTarget) {
+                                    drawCircle(
+                                        color = Color(0xFF38BDF8).copy(alpha = 0.4f),
+                                        radius = diameter + 12f,
+                                        center = Offset(cPos, socketY),
+                                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f)
+                                    )
+                                }
+
+                                // Right channel target ring with helper pulse
                                 drawCircle(
                                     color = if (lastLaneTapped == 2) litLane else colLane,
                                     radius = diameter,
                                     center = Offset(rPos, socketY),
                                     style = androidx.compose.ui.graphics.drawscope.Stroke(width = if (lastLaneTapped == 2) 6f else 2f)
                                 )
+                                if (rHasTarget) {
+                                    drawCircle(
+                                        color = Color(0xFF38BDF8).copy(alpha = 0.4f),
+                                        radius = diameter + 12f,
+                                        center = Offset(rPos, socketY),
+                                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f)
+                                    )
+                                }
 
                                 // Traveling nodes
                                 for (node in linkerNodes) {
@@ -648,7 +793,7 @@ fun GameScreen(
                                     val isCorrect = node.third
 
                                     if (isCorrect) {
-                                        // Transaction core data
+                                        // Transaction core data with glowing ring
                                         drawCircle(
                                             color = Color(0xFF4FC3F7),
                                             radius = 22f,
@@ -691,39 +836,41 @@ fun GameScreen(
                                 drawCircle(cloudCol, 120f, Offset(size.width * 0.8f, size.height * 0.3f))
                                 drawCircle(cloudCol, 90f, Offset(size.width * 0.2f, size.height * 0.6f))
 
-                                // Draw candlesticks hurdles
+                                // Draw financial candlesticks hurdles
                                 for (pillar in planePillars) {
                                     val pilX = pillar.first * size.width
                                     val gapCenter = pillar.second * size.height
-                                    val pillarWidth = 72f
-                                    val halfGapSize = 0.13f * size.height
+                                    val pillarWidth = 48f
+                                    val halfGapSize = 0.15f * size.height
 
-                                    // Top candlestick
+                                    // Top candlestick (Bullish Green Body)
                                     val topBottom = gapCenter - halfGapSize
                                     drawRect(
-                                        color = Color(0xFF66BB6A),
+                                        color = Color(0xFF2E7D32),
                                         topLeft = Offset(pilX - pillarWidth / 2, 0f),
                                         size = Size(pillarWidth, topBottom)
                                     )
+                                    // green wick
                                     drawLine(
-                                        color = Color(0xFF66BB6A),
+                                        color = Color(0xFF81C784),
                                         start = Offset(pilX, 0f),
-                                        end = Offset(pilX, topBottom + 30f),
-                                        strokeWidth = 3f
+                                        end = Offset(pilX, topBottom + 20f),
+                                        strokeWidth = 4f
                                     )
 
-                                    // Bottom candlestick
+                                    // Bottom candlestick (Bearish Red Body)
                                     val bottomTop = gapCenter + halfGapSize
                                     drawRect(
-                                        color = Color(0xFFEF5350),
+                                        color = Color(0xFFC62828),
                                         topLeft = Offset(pilX - pillarWidth / 2, bottomTop),
                                         size = Size(pillarWidth, size.height - bottomTop)
                                     )
+                                    // red wick
                                     drawLine(
-                                        color = Color(0xFFEF5350),
-                                        start = Offset(pilX, bottomTop - 30f),
+                                        color = Color(0xFFE57373),
+                                        start = Offset(pilX, bottomTop - 20f),
                                         end = Offset(pilX, size.height),
-                                        strokeWidth = 3f
+                                        strokeWidth = 4f
                                     )
                                 }
 
@@ -759,6 +906,65 @@ fun GameScreen(
                                     style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3f)
                                 )
                             }
+                        }
+
+                        // Draw visual particles on top of standard elements
+                        for (p in particles) {
+                            val px = p.x * size.width
+                            val py = p.y * size.height
+                            val alpha = p.ticks.toFloat() / p.maxTicks.toFloat()
+                            drawCircle(
+                                color = p.color,
+                                radius = p.size,
+                                center = Offset(px, py),
+                                alpha = alpha
+                            )
+                        }
+                    }
+
+                    // Huge, beautiful semitransparent arcade score HUD overlay
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(top = 16.dp),
+                        contentAlignment = Alignment.TopCenter
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "LIVE HUD SCORE",
+                                color = Color.Gray.copy(alpha = 0.45f),
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 2.sp
+                            )
+                            Text(
+                                text = score.toString().padStart(5, '0'),
+                                color = Color.White.copy(alpha = 0.85f),
+                                fontSize = 36.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                letterSpacing = 3.sp
+                            )
+                        }
+                    }
+
+                    // Floating Score / Damage Popups Overlay
+                    scorePopups.forEach { popup ->
+                        val alpha = popup.ticks.toFloat() / 20f
+                        Box(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Text(
+                                text = popup.text,
+                                color = popup.color.copy(alpha = alpha),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Black,
+                                modifier = Modifier
+                                    .align(Alignment.TopStart)
+                                    .offset(
+                                        x = (popup.x * this@BoxWithConstraints.maxWidth.value).dp - 40.dp,
+                                        y = (popup.y * this@BoxWithConstraints.maxHeight.value).dp
+                                    )
+                            )
                         }
                     }
 
@@ -921,6 +1127,8 @@ fun GameScreen(
                         planeY = 0.5f
                         planeVelocity = 0.0f
                         planePillars = emptyList()
+                        scorePopups = emptyList()
+                        particles = emptyList()
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -987,3 +1195,22 @@ fun GameScreen(
         }
     }
 }
+
+data class PopupEffect(
+    val x: Float,
+    val y: Float,
+    val text: String,
+    val color: Color,
+    val ticks: Int
+)
+
+data class ParticleEffect(
+    val x: Float,
+    val y: Float,
+    val vx: Float,
+    val vy: Float,
+    val color: Color,
+    val size: Float,
+    val maxTicks: Int,
+    val ticks: Int
+)
