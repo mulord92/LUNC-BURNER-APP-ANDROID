@@ -912,7 +912,7 @@ fun GameScreen(
                         for (p in particles) {
                             val px = p.x * size.width
                             val py = p.y * size.height
-                            val alpha = p.ticks.toFloat() / p.maxTicks.toFloat()
+                            val alpha = (p.ticks.toFloat() / p.maxTicks.toFloat()).coerceIn(0f, 1f)
                             drawCircle(
                                 color = p.color,
                                 radius = p.size,
@@ -949,7 +949,7 @@ fun GameScreen(
 
                     // Floating Score / Damage Popups Overlay
                     scorePopups.forEach { popup ->
-                        val alpha = popup.ticks.toFloat() / 20f
+                        val alpha = (popup.ticks.toFloat() / 20f).coerceIn(0f, 1f)
                         Box(
                             modifier = Modifier.fillMaxSize()
                         ) {
