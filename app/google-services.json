@@ -38,6 +38,14 @@
           }
         },
         {
+          "client_id": "529901897913-vgimqoj4t64kec5fa18vpl4cio7g2lo0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aistudio.luncburner.vuxjqp",
+            "certificate_hash": "109703e31e8ead6d38fd868bb49b5181faabd628"
+          }
+        },
+        {
           "client_id": "529901897913-n1d8k9dv4kvdhg376ig8g51ugnh80ghv.apps.googleusercontent.com",
           "client_type": 3
         }

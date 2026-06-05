@@ -56,15 +56,27 @@ fun MainContainer(
     val activity = context as? Activity
 
     var currentTab by remember { mutableStateOf("DASH") }
+    var tabSwitchCountSinceLastAd by remember { mutableStateOf(0) }
+    var lastAdShownTimestamp by remember { mutableStateOf(0L) }
 
     val onTabClicked = { targetTab: String ->
         if (currentTab != targetTab) {
             val act = activity
-            if (act != null) {
+            val now = System.currentTimeMillis()
+            // Minimize interstitial ads by showing them only if the user has navigated/switched tabs
+            // at least 3 times since the last shown ad, AND at least 90 seconds (90000ms) have elapsed.
+            val shouldShowAd = act != null && 
+                    tabSwitchCountSinceLastAd >= 3 && 
+                    (now - lastAdShownTimestamp >= 90000L)
+            
+            if (shouldShowAd && act != null) {
                 LuncAdManager.showInterstitial(act) {
+                    tabSwitchCountSinceLastAd = 0
+                    lastAdShownTimestamp = System.currentTimeMillis()
                     currentTab = targetTab
                 }
             } else {
+                tabSwitchCountSinceLastAd++
                 currentTab = targetTab
             }
         }

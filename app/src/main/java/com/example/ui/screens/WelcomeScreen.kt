@@ -728,7 +728,7 @@ fun WelcomeScreen(
                                                         isSigningIn = false
                                                         val msg = fallbackErr.localizedMessage ?: ""
                                                         val cause = if (msg.contains("get your package") || msg.contains("10:")) {
-                                                            "Firebase Auth error: Missing SHA-1 in Firebase Console. You MUST add the new SHA-1 to your Firebase Project: 25:34:24:DD:8B:BB:22:9F:75:84:30:6C:DB:13:52:A7:33:14:6F:25 for package com.aistudio.luncburner.vuxjqp. Re-download google-services.json afterwards."
+                                                            "Firebase Auth error: Missing SHA-1 in Firebase Console. You MUST add the new SHA-1 to your Firebase Project: 10:97:03:E3:1E:8E:AD:6D:38:FD:86:8B:B4:9B:51:81:FA:AB:D6:28 for package com.aistudio.luncburner.vuxjqp. Re-download google-services.json afterwards."
                                                         } else {
                                                             msg
                                                         }
